@@ -39,7 +39,7 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
                         }
                     } else if (l.startsWith("// ELSE IF")) {
                         inBlock = false
-                        if (!inIfBlock && folder in l.trim().removePrefix("// ELSE IF").split(" || ")) {
+                        if (!inIfBlock && folder in l.trim().removePrefix("// ELSE IF ").split(" || ")) {
                             inBlock = true
                             inIfBlock = true
                         }
@@ -67,7 +67,7 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
                         }
                     } else if (l.startsWith("# ELSE IF")) {
                         inOtherBlock = false
-                        if (!inOtherIfBlock && folder in l.trim().removePrefix("# ELSE IF").split(" || ")) {
+                        if (!inOtherIfBlock && folder in l.trim().removePrefix("# ELSE IF ").split(" || ")) {
                             inOtherBlock = true
                             inOtherIfBlock = true
                         }
