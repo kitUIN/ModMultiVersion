@@ -11,7 +11,7 @@ import java.io.File
 
 
 class FileSaveListener(private val project: Project?) : BulkFileListener {
-    var loaders = arrayOf("fabric", "neoforge", "forge", "quilt")
+    private var loaders = arrayOf("fabric", "neoforge", "forge", "quilt")
 
     private fun copyFile(sourceFile: File, moduleContentRoot: VirtualFile, targetFileName: String, loader: String) {
         moduleContentRoot.findDirectory(loader)?.children?.forEach { loaderFile ->

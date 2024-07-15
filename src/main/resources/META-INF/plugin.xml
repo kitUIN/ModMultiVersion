@@ -14,7 +14,7 @@
          Simple HTML elements (text formatting, paragraphs, and lists) can be added inside of <![CDATA[ ]]> tag.
          Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-description -->
     <description><![CDATA[
-    适用于minecraft的多版本协同开发,同步加载不同版本的文件,支持fabric/forge/neoforge/quilt
+    Suitable for multi-version collaborative development of minecraft, loading different versions of files simultaneously, and supporting fabric/forge/neoforge/quilt
   ]]></description>
 
     <!-- Product and plugin compatibility requirements.
