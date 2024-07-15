@@ -40,5 +40,3 @@ bin/
 
 ### Mac OS ###
 .DS_Store
-/.idea/
-/.run/
