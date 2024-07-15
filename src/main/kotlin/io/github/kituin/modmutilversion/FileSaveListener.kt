@@ -26,6 +26,7 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
         sourceFile.copyTo(targetFile, overwrite = true)
         val lines = targetFile.readLines()
         var inBlock = false
+        var inOtherBlock = false
         val newLines = lines.map { line ->
             when {
                 line.trim() == "// IF $folder" -> {
@@ -45,7 +46,23 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
                 inBlock && !forward -> {
                     "//$line"
                 }
+                line.trim() == "# IF $folder" -> {
+                    inOtherBlock = true
+                    line
+                }
 
+                line.trim() == "# END IF" -> {
+                    inOtherBlock = false
+                    line
+                }
+                // 正向
+                inOtherBlock && forward && line.trim().startsWith("#") -> {
+                    line.removePrefix("#")
+                }
+                // 反向
+                inOtherBlock && !forward -> {
+                    "#$line"
+                }
                 else -> {
                     line
                 }
