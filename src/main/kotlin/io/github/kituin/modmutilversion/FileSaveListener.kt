@@ -12,7 +12,6 @@ import java.io.File
 
 class FileSaveListener(private val project: Project?) : BulkFileListener {
     private var loaders = arrayOf("fabric", "neoforge", "forge", "quilt")
-
     private fun copyFile(sourceFile: File, moduleContentRoot: VirtualFile, targetFileName: String, loader: String) {
         moduleContentRoot.findDirectory(loader)?.children?.forEach { loaderFile ->
             if (loaderFile.isDirectory && loaderFile.name.startsWith(loader)) {
@@ -26,43 +25,75 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
         sourceFile.copyTo(targetFile, overwrite = true)
         val lines = targetFile.readLines()
         var inBlock = false
+        var inIfBlock = false
         var inOtherBlock = false
+        var inOtherIfBlock = false
         val newLines = lines.map { line ->
             when {
-                line.trim() == "// IF $folder" -> {
-                    inBlock = true
-                    line
+                line.startsWith("//") -> {
+                    var l = line
+                    if (l.startsWith("// IF")) {
+                        if (folder in l.trim().removePrefix("// IF ").split(" || ")) {
+                            inBlock = true
+                            inIfBlock = true
+                        }
+                    } else if (l.startsWith("// ELSE IF")) {
+                        inBlock = false
+                        if (!inIfBlock && folder in l.trim().removePrefix("// ELSE IF").split(" || ")) {
+                            inBlock = true
+                            inIfBlock = true
+                        }
+                    } else if (l.startsWith("// ELSE")) {
+                        inBlock = false
+                        if (!inIfBlock){
+                            inBlock = true
+                            inIfBlock = true
+                        }
+                    } else if (l.trim() == "// END IF") {
+                        inBlock = false
+                        inIfBlock = false
+                    } else if (inBlock && forward) {
+                        l = line.removePrefix("//")
+                    }
+                    l
                 }
 
-                line.trim() == "// END IF" -> {
-                    inBlock = false
-                    line
+                line.startsWith("#") -> {
+                    var l = line
+                    if (l.startsWith("# IF")) {
+                        if (folder in l.trim().removePrefix("# IF ").split(" || ")) {
+                            inOtherBlock = true
+                            inOtherIfBlock = true
+                        }
+                    } else if (l.startsWith("# ELSE IF")) {
+                        inOtherBlock = false
+                        if (!inOtherIfBlock && folder in l.trim().removePrefix("# ELSE IF").split(" || ")) {
+                            inOtherBlock = true
+                            inOtherIfBlock = true
+                        }
+                    } else if (l.startsWith("# ELSE")) {
+                        inOtherBlock = false
+                        if(!inOtherIfBlock){
+                            inOtherBlock = true
+                            inOtherIfBlock = true
+                        }
+                    } else if (l == "# END IF") {
+                        inOtherBlock = false
+                        inOtherIfBlock = false
+                    } else if (inOtherBlock && forward) {
+                        l = line.removePrefix("#")
+                    }
+                    l
                 }
-                // 正向
-                inBlock && forward && line.trim().startsWith("//") -> {
-                    line.removePrefix("//")
-                }
-                // 反向
+
                 inBlock && !forward -> {
                     "//$line"
                 }
-                line.trim() == "# IF $folder" -> {
-                    inOtherBlock = true
-                    line
-                }
 
-                line.trim() == "# END IF" -> {
-                    inOtherBlock = false
-                    line
-                }
-                // 正向
-                inOtherBlock && forward && line.trim().startsWith("#") -> {
-                    line.removePrefix("#")
-                }
-                // 反向
                 inOtherBlock && !forward -> {
                     "#$line"
                 }
+
                 else -> {
                     line
                 }
@@ -100,17 +131,20 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
                     } else { // 反向更新
                         var folder: String
                         val subList = relativePath.split("/").let {
+                            if (it.count() < 2) return
                             folder = it[1]
                             it.subList(2, it.count())
                         }
                         val subPath = subList.joinToString(separator = "/")
                         val forwardPath = "$projectPath/$loader/origin/$subPath"
-                        println(forwardPath)
                         if (moduleContentRoot.findFile(forwardPath) != null) {
                             // 如果有加载器特有的文件
                             copy(sourceFile, File(forwardPath), folder, false)
                         } else {
-                            copy(sourceFile, File("$projectPath/origin/$subPath"), folder, false)
+                            val target = File("$projectPath/origin/$subPath")
+                            if (target.exists()) {
+                                copy(sourceFile, target, folder, false)
+                            }
                         }
                     }
                 }
