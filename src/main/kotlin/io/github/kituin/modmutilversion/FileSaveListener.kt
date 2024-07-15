@@ -1,5 +1,6 @@
 package io.github.kituin.modmutilversion
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
@@ -12,14 +13,29 @@ import java.io.File
 
 class FileSaveListener(private val project: Project?) : BulkFileListener {
     private var loaders = arrayOf("fabric", "neoforge", "forge", "quilt")
-    private fun copyFile(sourceFile: File, moduleContentRoot: VirtualFile, targetFileName: String, loader: String) {
+    private fun copyFile(
+        sourceFile: File,
+        moduleContentRoot: VirtualFile,
+        targetFileName: String,
+        loader: String,
+        relativePath: String
+    ) {
+        val setting = project?.let { SyncSetting.getInstance(it) } ?: return
         moduleContentRoot.findDirectory(loader)?.children?.forEach { loaderFile ->
             if (loaderFile.isDirectory && loaderFile.name.startsWith(loader)) {
+                val loaderName = "$loader/${loaderFile.name}"
+                if (setting.state.black[relativePath]?.contains(loaderName) == true) {
+                    return@forEach
+                }
+                if (setting.state.white[relativePath]?.contains(loaderName) != true) {
+                    return@forEach
+                }
                 val targetFile = File("${loaderFile.path}/$targetFileName")
                 copy(sourceFile, targetFile, loaderFile.name)
             }
         }
     }
+
 
     private fun copy(sourceFile: File, targetFile: File, folder: String, forward: Boolean = true) {
         sourceFile.copyTo(targetFile, overwrite = true)
@@ -45,7 +61,7 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
                         }
                     } else if (l.startsWith("// ELSE")) {
                         inBlock = false
-                        if (!inIfBlock){
+                        if (!inIfBlock) {
                             inBlock = true
                             inIfBlock = true
                         }
@@ -73,7 +89,7 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
                         }
                     } else if (l.startsWith("# ELSE")) {
                         inOtherBlock = false
-                        if(!inOtherIfBlock){
+                        if (!inOtherIfBlock) {
                             inOtherBlock = true
                             inOtherIfBlock = true
                         }
@@ -121,13 +137,13 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
                             // 如果有加载器特有的文件,则不复制
                             continue
                         }
-                        copyFile(sourceFile, moduleContentRoot, targetFileName, loader)
+                        copyFile(sourceFile, moduleContentRoot, targetFileName, loader, relativePath)
                     }
                 } else {
                     val loader = loaders.firstOrNull { relativePath.startsWith(it) } ?: return
                     if (relativePath.startsWith("$loader/origin/")) {
                         val targetFileName = relativePath.removePrefix("$loader/origin/")
-                        copyFile(sourceFile, moduleContentRoot, targetFileName, loader)
+                        copyFile(sourceFile, moduleContentRoot, targetFileName, loader, relativePath)
                     } else { // 反向更新
                         var folder: String
                         val subList = relativePath.split("/").let {
