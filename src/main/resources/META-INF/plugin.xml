@@ -25,14 +25,19 @@
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
     <extensions defaultExtensionNs="com.intellij"/>
     <actions>
-<!--        <group id="io.github.kituin.modmutilversion.syncsetblackgroup" text="多版本同步黑名单"/>-->
-<!--        <group id="io.github.kituin.modmutilversion.syncsetwhitegroup" text="多版本同步白名单"/>-->
+        <!--        <group id="io.github.kituin.modmutilversion.syncsetblackgroup" text="多版本同步黑名单"/>-->
+        <!--        <group id="io.github.kituin.modmutilversion.syncsetwhitegroup" text="多版本同步白名单"/>-->
         <action id="io.github.kituin.modmutilversion.syncsetblack" class="io.github.kituin.modmutilversion.SyncSetBlack"
                 text="多版本同步黑名单">
             <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
         </action>
         <action id="io.github.kituin.modmutilversion.syncsetwhite" class="io.github.kituin.modmutilversion.SyncSetWhite"
                 text="多版本同步白名单">
+            <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+        </action>
+        <action id="io.github.kituin.modmutilversion.syncsetoneway"
+                class="io.github.kituin.modmutilversion.SyncSetOneWay"
+                text="单向多版本同步">
             <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
         </action>
     </actions>

@@ -24,29 +24,41 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
         moduleContentRoot.findDirectory(loader)?.children?.forEach { loaderFile ->
             if (loaderFile.isDirectory && loaderFile.name.startsWith(loader)) {
                 val loaderName = "$loader/${loaderFile.name}"
-                val targetFile = File("${loaderFile.path}/$targetFileName")
+                var targetFileName = "${loaderFile.path}/$targetFileName"
+                if (relativePath.endsWith(".json5") && setting.state.replaceJson5) {
+                    targetFileName = targetFileName.replace(".json5", ".json")
+                }
+                val targetFile = File(targetFileName)
                 if (setting.state.black[relativePath]?.contains(loaderName) == true) {
 //                    println("black")
-                    if(targetFile.exists()){
+                    if (targetFile.exists()) {
                         targetFile.delete()
                     }
                     return@forEach
                 }
-                if (setting.state.white.containsKey(relativePath) && !setting.state.white[relativePath]!!.contains(loaderName)) {
+                if (setting.state.white.containsKey(relativePath) && !setting.state.white[relativePath]!!.contains(
+                        loaderName
+                    )
+                ) {
 //                    println("white")
-                    if(targetFile.exists()){
+                    if (targetFile.exists()) {
                         targetFile.delete()
                     }
                     return@forEach
                 }
-                copy(sourceFile, targetFile, loaderFile.name)
+                copy(sourceFile, targetFile, loaderFile.name, setting.state.oneWay.contains(relativePath))
                 loaderFile.refresh(true, false)
             }
         }
     }
 
 
-    private fun copy(sourceFile: File, targetFile: File, folder: String, forward: Boolean = true) {
+    private fun copy(
+        sourceFile: File, targetFile: File,
+        folder: String,
+        forward: Boolean = true,
+        oneWay: Boolean = false
+    ) {
         sourceFile.copyTo(targetFile, overwrite = true)
         val lines = targetFile.readLines()
         var inBlock = false
@@ -56,59 +68,53 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
         val newLines = lines.map { line ->
             when {
                 line.startsWith("//") -> {
-                    var l = line
-                    if (l.startsWith("// IF")) {
-                        if (folder in l.trim().removePrefix("// IF ").split(" || ")) {
+                    if (line.startsWith("// IF")) {
+                        if (folder in line.trim().removePrefix("// IF ").split(" || ")) {
                             inBlock = true
                             inIfBlock = true
                         }
-                    } else if (l.startsWith("// ELSE IF")) {
+                    } else if (line.startsWith("// ELSE IF")) {
                         inBlock = false
-                        if (!inIfBlock && folder in l.trim().removePrefix("// ELSE IF ").split(" || ")) {
+                        if (!inIfBlock && folder in line.trim().removePrefix("// ELSE IF ").split(" || ")) {
                             inBlock = true
                             inIfBlock = true
                         }
-                    } else if (l.startsWith("// ELSE")) {
+                    } else if (line.startsWith("// ELSE")) {
                         inBlock = false
                         if (!inIfBlock) {
                             inBlock = true
                             inIfBlock = true
                         }
-                    } else if (l.trim() == "// END IF") {
+                    } else if (line.startsWith("// END IF")) {
                         inBlock = false
                         inIfBlock = false
-                    } else if (inBlock && forward) {
-                        l = line.removePrefix("//")
                     }
-                    l
+                    if (inBlock && forward) line.removePrefix("//") else (if (oneWay) "" else line)
                 }
 
                 line.startsWith("#") -> {
-                    var l = line
-                    if (l.startsWith("# IF")) {
-                        if (folder in l.trim().removePrefix("# IF ").split(" || ")) {
+                    if (line.startsWith("# IF")) {
+                        if (folder in line.trim().removePrefix("# IF ").split(" || ")) {
                             inOtherBlock = true
                             inOtherIfBlock = true
                         }
-                    } else if (l.startsWith("# ELSE IF")) {
+                    } else if (line.startsWith("# ELSE IF")) {
                         inOtherBlock = false
-                        if (!inOtherIfBlock && folder in l.trim().removePrefix("# ELSE IF ").split(" || ")) {
+                        if (!inOtherIfBlock && folder in line.trim().removePrefix("# ELSE IF ").split(" || ")) {
                             inOtherBlock = true
                             inOtherIfBlock = true
                         }
-                    } else if (l.startsWith("# ELSE")) {
+                    } else if (line.startsWith("# ELSE")) {
                         inOtherBlock = false
                         if (!inOtherIfBlock) {
                             inOtherBlock = true
                             inOtherIfBlock = true
                         }
-                    } else if (l == "# END IF") {
+                    } else if (line.startsWith("# END IF")) {
                         inOtherBlock = false
                         inOtherIfBlock = false
-                    } else if (inOtherBlock && forward) {
-                        l = line.removePrefix("#")
                     }
-                    l
+                    if (inOtherBlock && forward) line.removePrefix("#") else (if (oneWay) "" else line)
                 }
 
                 inBlock && !forward -> {
@@ -134,7 +140,7 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
         events.forEach { event ->
             val file = event.file
             if (file != null && projectPath != null && !file.isDirectory && file.path.startsWith(projectPath)) {
-                println(file.path)
+//                println(file.path)
                 val moduleContentRoot = projectFileIndex.getContentRootForFile(file) ?: return
                 val relativePath = file.path.removePrefix("$projectPath/")
                 val sourceFile = File(file.path)
@@ -162,12 +168,16 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
                         }
                         val subPath = subList.joinToString(separator = "/")
                         val forwardPath = "$projectPath/$loader/origin/$subPath"
-                        if (moduleContentRoot.findFile(forwardPath) != null) {
+                        val setting = project.service<SyncSetting>()
+                        if (moduleContentRoot.findFile(forwardPath) != null &&
+                            !setting.state.oneWay.contains(forwardPath)
+                        ) {
                             // 如果有加载器特有的文件
                             copy(sourceFile, File(forwardPath), folder, false)
                         } else {
-                            val target = File("$projectPath/origin/$subPath")
-                            if (target.exists()) {
+                            val targetName = "$projectPath/origin/$subPath"
+                            val target = File(targetName)
+                            if (target.exists() && !setting.state.oneWay.contains(targetName)) {
                                 copy(sourceFile, target, folder, false)
                             }
                         }

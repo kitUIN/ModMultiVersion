@@ -9,9 +9,10 @@ import com.intellij.util.xmlb.XmlSerializerUtil
 @Service(Service.Level.PROJECT)
 @State(name = "syncSetting", storages = [Storage("syncSetting.xml")])
 class SyncSetting : PersistentStateComponent<SyncSetting> {
-    var white = HashMap<String,List<String>>()
-    var black = HashMap<String,List<String>>()
-
+    var white = HashMap<String, List<String>>()
+    var black = HashMap<String, List<String>>()
+    var oneWay = ArrayList<String>()
+    var replaceJson5: Boolean = true
     override fun getState(): SyncSetting {
         return this
     }
