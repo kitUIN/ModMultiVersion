@@ -11,7 +11,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil
 class SyncSetting : PersistentStateComponent<SyncSetting> {
     var white = HashMap<String, List<String>>()
     var black = HashMap<String, List<String>>()
-    var oneWay = ArrayList<String>()
+    var oneWay : MutableList<String> = mutableListOf()
     var replaceJson5: Boolean = true
     override fun getState(): SyncSetting {
         return this

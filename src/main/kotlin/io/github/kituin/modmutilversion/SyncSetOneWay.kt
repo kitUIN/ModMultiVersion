@@ -14,9 +14,9 @@ class SyncSetOneWay : AnAction() {
         if (project != null && file != null && file.canonicalPath != null) {
             val setting = project.service<SyncSetting>()
             if (setting.state.oneWay.contains(file.canonicalPath)) {
-                setting.state.oneWay.add(file.canonicalPath!!)
-            } else {
                 setting.state.oneWay.remove(file.canonicalPath)
+            } else {
+                setting.state.oneWay.add(file.canonicalPath!!)
             }
         }
     }
