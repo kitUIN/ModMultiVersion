@@ -73,23 +73,27 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
                             inBlock = true
                             inIfBlock = true
                         }
+                        if (oneWay) "" else line
                     } else if (line.startsWith("// ELSE IF")) {
                         inBlock = false
                         if (!inIfBlock && folder in line.trim().removePrefix("// ELSE IF ").split(" || ")) {
                             inBlock = true
                             inIfBlock = true
                         }
+                        if (oneWay) "" else line
                     } else if (line.startsWith("// ELSE")) {
                         inBlock = false
                         if (!inIfBlock) {
                             inBlock = true
                             inIfBlock = true
                         }
+                        if (oneWay) "" else line
                     } else if (line.startsWith("// END IF")) {
                         inBlock = false
                         inIfBlock = false
+                        if (oneWay) "" else line
                     }
-                    if (inBlock && forward) line.removePrefix("//")
+                    else if (inBlock && forward) line.removePrefix("//")
                     else if (oneWay) ""
                     else line
                 }
@@ -100,25 +104,28 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
                             inOtherBlock = true
                             inOtherIfBlock = true
                         }
+                        if (oneWay) "" else line
                     } else if (line.startsWith("# ELSE IF")) {
                         inOtherBlock = false
                         if (!inOtherIfBlock && folder in line.trim().removePrefix("# ELSE IF ").split(" || ")) {
                             inOtherBlock = true
                             inOtherIfBlock = true
                         }
+                        if (oneWay) "" else line
                     } else if (line.startsWith("# ELSE")) {
                         inOtherBlock = false
                         if (!inOtherIfBlock) {
                             inOtherBlock = true
                             inOtherIfBlock = true
                         }
+                        if (oneWay) "" else line
                     } else if (line.startsWith("# END IF")) {
                         inOtherBlock = false
                         inOtherIfBlock = false
+                        if (oneWay) "" else line
                     }
-                    if (inBlock && forward) line.removePrefix("#")
-                    else if (oneWay) ""
-                    else line
+                    else if (inBlock && forward) line.removePrefix("#")
+                    else if (oneWay) "" else line
                 }
 
                 inBlock && !forward -> {
