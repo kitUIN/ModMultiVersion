@@ -122,7 +122,7 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
                         inOtherBlock = false
                         inOtherIfBlock = false
                         if (!oneWay) newLines.add(line)
-                    } else if (inBlock && forward) newLines.add(line.removePrefix("#"))
+                    } else if (inOtherBlock && forward) newLines.add(line.removePrefix("#"))
                     else if (!oneWay) newLines.add(line)
                 }
 
