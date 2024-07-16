@@ -47,7 +47,7 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
                     return@forEach
                 }
                 copy(sourceFile, targetFile, loaderFile.name, true, setting.state.oneWay.contains(relativePath))
-                loaderFile.refresh(true, false)
+                // loaderFile.refresh(true, false)
             }
         }
     }
@@ -65,7 +65,8 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
         var inIfBlock = false
         var inOtherBlock = false
         var inOtherIfBlock = false
-        val newLines = lines.map { line ->
+        val newLines = mutableListOf<String>()
+        for (line in lines) {
             when {
                 line.startsWith("//") -> {
                     if (line.startsWith("// IF")) {
@@ -73,29 +74,27 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
                             inBlock = true
                             inIfBlock = true
                         }
-                        if (oneWay) "" else line
+                        if (!oneWay) newLines.add(line)
                     } else if (line.startsWith("// ELSE IF")) {
                         inBlock = false
                         if (!inIfBlock && folder in line.trim().removePrefix("// ELSE IF ").split(" || ")) {
                             inBlock = true
                             inIfBlock = true
                         }
-                        if (oneWay) "" else line
+                        if (!oneWay) newLines.add(line)
                     } else if (line.startsWith("// ELSE")) {
                         inBlock = false
                         if (!inIfBlock) {
                             inBlock = true
                             inIfBlock = true
                         }
-                        if (oneWay) "" else line
+                        if (!oneWay) newLines.add(line)
                     } else if (line.startsWith("// END IF")) {
                         inBlock = false
                         inIfBlock = false
-                        if (oneWay) "" else line
-                    }
-                    else if (inBlock && forward) line.removePrefix("//")
-                    else if (oneWay) ""
-                    else line
+                        if (!oneWay) newLines.add(line)
+                    } else if (inBlock && forward) newLines.add(line.removePrefix("//"))
+                    else if (!oneWay) newLines.add(line)
                 }
 
                 line.startsWith("#") -> {
@@ -104,45 +103,45 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
                             inOtherBlock = true
                             inOtherIfBlock = true
                         }
-                        if (oneWay) "" else line
+                        if (!oneWay) newLines.add(line)
                     } else if (line.startsWith("# ELSE IF")) {
                         inOtherBlock = false
                         if (!inOtherIfBlock && folder in line.trim().removePrefix("# ELSE IF ").split(" || ")) {
                             inOtherBlock = true
                             inOtherIfBlock = true
                         }
-                        if (oneWay) "" else line
+                        if (!oneWay) newLines.add(line)
                     } else if (line.startsWith("# ELSE")) {
                         inOtherBlock = false
                         if (!inOtherIfBlock) {
                             inOtherBlock = true
                             inOtherIfBlock = true
                         }
-                        if (oneWay) "" else line
+                        if (!oneWay) newLines.add(line)
                     } else if (line.startsWith("# END IF")) {
                         inOtherBlock = false
                         inOtherIfBlock = false
-                        if (oneWay) "" else line
-                    }
-                    else if (inBlock && forward) line.removePrefix("#")
-                    else if (oneWay) "" else line
+                        if (!oneWay) newLines.add(line)
+                    } else if (inBlock && forward) newLines.add(line.removePrefix("#"))
+                    else if (!oneWay) newLines.add(line)
                 }
 
                 inBlock && !forward -> {
-                    "//$line"
+                    newLines.add("//$line")
                 }
 
                 inOtherBlock && !forward -> {
-                    "#$line"
+                    newLines.add("#$line")
                 }
 
                 else -> {
-                    line
+                    newLines.add(line)
                 }
             }
         }
         targetFile.writeText(newLines.joinToString("\n"))
     }
+
 
     override fun after(events: List<VFileEvent>) {
         if (project == null) return
