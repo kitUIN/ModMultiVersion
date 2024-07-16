@@ -24,16 +24,23 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
         moduleContentRoot.findDirectory(loader)?.children?.forEach { loaderFile ->
             if (loaderFile.isDirectory && loaderFile.name.startsWith(loader)) {
                 val loaderName = "$loader/${loaderFile.name}"
+                val targetFile = File("${loaderFile.path}/$targetFileName")
                 if (setting.state.black[relativePath]?.contains(loaderName) == true) {
 //                    println("black")
+                    if(targetFile.exists()){
+                        targetFile.delete()
+                    }
                     return@forEach
                 }
                 if (setting.state.white.containsKey(relativePath) && !setting.state.white[relativePath]!!.contains(loaderName)) {
 //                    println("white")
+                    if(targetFile.exists()){
+                        targetFile.delete()
+                    }
                     return@forEach
                 }
-                val targetFile = File("${loaderFile.path}/$targetFileName")
                 copy(sourceFile, targetFile, loaderFile.name)
+                loaderFile.refresh(true, false)
             }
         }
     }
@@ -127,7 +134,7 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
         events.forEach { event ->
             val file = event.file
             if (file != null && projectPath != null && !file.isDirectory && file.path.startsWith(projectPath)) {
-//                println(file.path)
+                println(file.path)
                 val moduleContentRoot = projectFileIndex.getContentRootForFile(file) ?: return
                 val relativePath = file.path.removePrefix("$projectPath/")
                 val sourceFile = File(file.path)

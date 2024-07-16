@@ -17,7 +17,9 @@ class SyncSetWhite : AnAction() {
                 setting.state.white.remove(file.canonicalPath)
             }
             else{
-                setting.state.white[file.canonicalPath!!] = emptyList()
+                if (MyDialogWrapper(project,false, file.canonicalPath!!).showAndGet()) {
+                    // user pressed OK
+                }
             }
         }
     }
