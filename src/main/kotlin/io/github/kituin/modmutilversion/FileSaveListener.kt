@@ -20,14 +20,16 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
         loader: String,
         relativePath: String
     ) {
-        val setting = project?.let { SyncSetting.getInstance(it) } ?: return
+        val setting = project?.service<SyncSetting>() ?: return
         moduleContentRoot.findDirectory(loader)?.children?.forEach { loaderFile ->
             if (loaderFile.isDirectory && loaderFile.name.startsWith(loader)) {
                 val loaderName = "$loader/${loaderFile.name}"
                 if (setting.state.black[relativePath]?.contains(loaderName) == true) {
+//                    println("black")
                     return@forEach
                 }
-                if (setting.state.white[relativePath]?.contains(loaderName) != true) {
+                if (setting.state.white.containsKey(relativePath) && !setting.state.white[relativePath]!!.contains(loaderName)) {
+//                    println("white")
                     return@forEach
                 }
                 val targetFile = File("${loaderFile.path}/$targetFileName")
@@ -125,7 +127,7 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
         events.forEach { event ->
             val file = event.file
             if (file != null && projectPath != null && !file.isDirectory && file.path.startsWith(projectPath)) {
-                println(file.path)
+//                println(file.path)
                 val moduleContentRoot = projectFileIndex.getContentRootForFile(file) ?: return
                 val relativePath = file.path.removePrefix("$projectPath/")
                 val sourceFile = File(file.path)
@@ -137,13 +139,13 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
                             // 如果有加载器特有的文件,则不复制
                             continue
                         }
-                        copyFile(sourceFile, moduleContentRoot, targetFileName, loader, relativePath)
+                        copyFile(sourceFile, moduleContentRoot, targetFileName, loader, file.path)
                     }
                 } else {
                     val loader = loaders.firstOrNull { relativePath.startsWith(it) } ?: return
                     if (relativePath.startsWith("$loader/origin/")) {
                         val targetFileName = relativePath.removePrefix("$loader/origin/")
-                        copyFile(sourceFile, moduleContentRoot, targetFileName, loader, relativePath)
+                        copyFile(sourceFile, moduleContentRoot, targetFileName, loader, file.path)
                     } else { // 反向更新
                         var folder: String
                         val subList = relativePath.split("/").let {
