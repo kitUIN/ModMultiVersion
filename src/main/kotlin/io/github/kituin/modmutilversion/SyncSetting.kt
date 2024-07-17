@@ -1,4 +1,4 @@
-package io.github.kituin.modmutilversion
+package io.github.kituin.modmultiversion
 
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.Service

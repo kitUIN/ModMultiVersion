@@ -5,4 +5,4 @@ pluginManagement {
     }
 }
 
-rootProject.name = "ModMutilVersion"
+rootProject.name = "modmultiversion"

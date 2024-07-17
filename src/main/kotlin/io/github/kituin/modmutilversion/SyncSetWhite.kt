@@ -1,4 +1,4 @@
-package io.github.kituin.modmutilversion;
+package io.github.kituin.modmultiversion
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -17,9 +17,7 @@ class SyncSetWhite : AnAction() {
                 setting.state.white.remove(file.canonicalPath)
             }
             else{
-                if (MyDialogWrapper(project,false, file.canonicalPath!!).showAndGet()) {
-                    // user pressed OK
-                }
+                MyDialogWrapper(project,false, file.canonicalPath!!).showAndGet()
             }
         }
     }

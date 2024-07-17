@@ -1,4 +1,4 @@
-package io.github.kituin.modmutilversion;
+package io.github.kituin.modmultiversion
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent

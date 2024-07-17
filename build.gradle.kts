@@ -1,16 +1,30 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+
 plugins {
     id("java")
     id("org.jetbrains.kotlin.jvm") version "1.9.24"
     id("org.jetbrains.intellij") version "1.17.3"
+    id("com.github.johnrengelman.shadow") version "7.0.0"
 }
+
+val shadowImplementation by configurations.creating
+configurations["compileOnly"].extendsFrom(shadowImplementation)
+configurations["testImplementation"].extendsFrom(shadowImplementation)
 
 group = "io.github.kituin"
 version = project.version
 
 repositories {
     mavenCentral()
+    maven {
+        name = "kituinMavenReleases"
+        url = uri("https://maven.kituin.fun/releases")
+    }
 }
 
+dependencies {
+    shadowImplementation("io.github.kituin:ModMultiVersionInterpreter:1.3.1")
+}
 // Configure Gradle IntelliJ Plugin
 // Read more: https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html
 intellij {
@@ -44,4 +58,24 @@ tasks {
     publishPlugin {
         token.set(System.getenv("PUBLISH_TOKEN"))
     }
+}
+val shadowJarTask = tasks.named<ShadowJar>("shadowJar") {
+    dependencies {
+        include(dependency("io.github.kituin:ModMultiVersionInterpreter:1.2.3"))
+    }
+    // automatically remove all classes of dependencies that are not used by the project
+    minimize()
+    // remove default "-all" suffix to make shadow jar look like original one.
+    archiveClassifier.set("")
+    // use only the dependencies from the shadowImplementation configuration
+    configurations = listOf(shadowImplementation)
+}
+configurations {
+    artifacts {
+        runtimeElements(shadowJarTask)
+        apiElements(shadowJarTask)
+    }
+}
+tasks.named("build") {
+    dependsOn(shadowJarTask)
 }

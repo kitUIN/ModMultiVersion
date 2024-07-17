@@ -1,4 +1,4 @@
-package io.github.kituin.modmutilversion
+package io.github.kituin.modmultiversion
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -9,8 +9,7 @@ import com.intellij.openapi.vfs.findFile
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import java.io.File
-
-
+import io.github.kituin.modmultiversioninterpreter.Interpreter
 class FileSaveListener(private val project: Project?) : BulkFileListener {
     private var loaders = arrayOf("fabric", "neoforge", "forge", "quilt")
     private fun copyFile(
@@ -70,14 +69,18 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
             when {
                 line.startsWith("//") -> {
                     if (line.startsWith("// IF")) {
-                        if (folder in line.trim().removePrefix("// IF ").split(" || ")) {
+                        if (Interpreter(
+                                line.trim().removePrefix("// IF"),
+                                mutableMapOf("$$" to folder)).interpret()) {
                             inBlock = true
                             inIfBlock = true
                         }
                         if (!oneWay) newLines.add(line)
                     } else if (line.startsWith("// ELSE IF")) {
                         inBlock = false
-                        if (!inIfBlock && folder in line.trim().removePrefix("// ELSE IF ").split(" || ")) {
+                        if (!inIfBlock && Interpreter(
+                                line.trim().removePrefix("// ELSE IF"),
+                                mutableMapOf("$$" to folder)).interpret()) {
                             inBlock = true
                             inIfBlock = true
                         }
@@ -99,14 +102,18 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
 
                 line.startsWith("#") -> {
                     if (line.startsWith("# IF")) {
-                        if (folder in line.trim().removePrefix("# IF ").split(" || ")) {
+                        if (Interpreter(
+                                line.trim().removePrefix("# IF"),
+                                mutableMapOf("$$" to folder)).interpret()) {
                             inOtherBlock = true
                             inOtherIfBlock = true
                         }
                         if (!oneWay) newLines.add(line)
                     } else if (line.startsWith("# ELSE IF")) {
                         inOtherBlock = false
-                        if (!inOtherIfBlock && folder in line.trim().removePrefix("# ELSE IF ").split(" || ")) {
+                        if (!inOtherIfBlock && Interpreter(
+                                line.trim().removePrefix("# ELSE IF"),
+                                mutableMapOf("$$" to folder)).interpret()) {
                             inOtherBlock = true
                             inOtherIfBlock = true
                         }

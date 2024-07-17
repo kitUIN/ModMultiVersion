@@ -1,4 +1,4 @@
-package io.github.kituin.modmutilversion
+package io.github.kituin.modmultiversion
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -17,9 +17,7 @@ class SyncSetBlack : AnAction() {
                 setting.state.black.remove(file.canonicalPath)
             }
             else{
-                if (MyDialogWrapper(project,true, file.canonicalPath!!).showAndGet()) {
-                    // user pressed OK
-                }
+                MyDialogWrapper(project,true, file.canonicalPath!!).showAndGet()
             }
         }
     }

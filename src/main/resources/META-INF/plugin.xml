@@ -1,11 +1,11 @@
 <!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
 <idea-plugin>
     <!-- Unique identifier of the plugin. It should be FQN. It cannot be changed between the plugin versions. -->
-    <id>io.github.kituin.ModMutilVersion</id>
+    <id>io.github.kituin.ModMultiVersion</id>
 
     <!-- Public plugin name should be written in Title Case.
          Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-name -->
-    <name>ModMutilVersion</name>
+    <name>ModMultiVersion</name>
 
     <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
     <vendor email="kit_uin@outlook.com" url="https://github.com/kitUIN">kitUIN</vendor>
@@ -25,25 +25,25 @@
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
     <extensions defaultExtensionNs="com.intellij"/>
     <actions>
-        <!--        <group id="io.github.kituin.modmutilversion.syncsetblackgroup" text="多版本同步黑名单"/>-->
-        <!--        <group id="io.github.kituin.modmutilversion.syncsetwhitegroup" text="多版本同步白名单"/>-->
-        <action id="io.github.kituin.modmutilversion.syncsetblack" class="io.github.kituin.modmutilversion.SyncSetBlack"
+        <!--        <group id="io.github.kituin.modmultiversion.syncsetblackgroup" text="多版本同步黑名单"/>-->
+        <!--        <group id="io.github.kituin.modmultiversion.syncsetwhitegroup" text="多版本同步白名单"/>-->
+        <action id="io.github.kituin.modmultiversion.syncsetblack" class="io.github.kituin.modmultiversion.SyncSetBlack"
                 text="多版本同步黑名单">
             <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
         </action>
-        <action id="io.github.kituin.modmutilversion.syncsetwhite" class="io.github.kituin.modmutilversion.SyncSetWhite"
+        <action id="io.github.kituin.modmultiversion.syncsetwhite" class="io.github.kituin.modmultiversion.SyncSetWhite"
                 text="多版本同步白名单">
             <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
         </action>
-        <action id="io.github.kituin.modmutilversion.syncsetoneway"
-                class="io.github.kituin.modmutilversion.SyncSetOneWay"
+        <action id="io.github.kituin.modmultiversion.syncsetoneway"
+                class="io.github.kituin.modmultiversion.SyncSetOneWay"
                 text="单向多版本同步">
             <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
         </action>
     </actions>
     <projectListeners>
         <listener
-                class="io.github.kituin.modmutilversion.FileSaveListener"
+                class="io.github.kituin.modmultiversion.FileSaveListener"
                 topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
     </projectListeners>
 </idea-plugin>
