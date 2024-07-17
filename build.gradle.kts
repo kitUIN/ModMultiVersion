@@ -10,7 +10,7 @@ plugins {
 val shadowImplementation by configurations.creating
 configurations["compileOnly"].extendsFrom(shadowImplementation)
 configurations["testImplementation"].extendsFrom(shadowImplementation)
-
+val interpreter_version: String by project
 group = "io.github.kituin"
 version = project.version
 
@@ -23,7 +23,7 @@ repositories {
 }
 
 dependencies {
-    shadowImplementation("io.github.kituin:ModMultiVersionInterpreter:1.3.1")
+    shadowImplementation("io.github.kituin:ModMultiVersionInterpreter:${interpreter_version}")
 }
 // Configure Gradle IntelliJ Plugin
 // Read more: https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html
@@ -61,7 +61,7 @@ tasks {
 }
 val shadowJarTask = tasks.named<ShadowJar>("shadowJar") {
     dependencies {
-        include(dependency("io.github.kituin:ModMultiVersionInterpreter:1.2.3"))
+        include(dependency("io.github.kituin:ModMultiVersionInterpreter:${interpreter_version}"))
     }
     // automatically remove all classes of dependencies that are not used by the project
     minimize()
