@@ -57,27 +57,17 @@
 如果origin是在加载器目录下,则只会复制到当前加载器内的版本文件夹下
 
 ### 语法规范
-- 注释位于顶格
-- 空格间隔,不能省略
+语法解析依赖于[ModMultiVersionInterpreter](https://github.com/kitUIN/ModMultiVersionInterpreter)
 
 ### 语法
 `IF-ELSE`模式
-- 注释支持`//`与`#`
-- 全大写
-- 允许使用`ELSE IF`
 - 必须以`END IF`结尾
-- 允许使用`||`或运算
-- 不支持`非`,`与`运算
-- 再次说明: 空格不能省略
-```java
-// IF {目标加载器版本文件夹} || {另一个加载器版本文件夹}
-//        代码
-// ELSE IF {另一个加载器版本文件夹}
-//        代码
-// ELSE
-//        代码
-// END IF
-```
+- 注释支持`//`与`#`
+- 关键字全大写
+- 允许使用`IF` `ELSE` ``ELSE IF`
+- 允许使用`或`,`非`,`与`运算
+- 允许使用`>`,`<`,`<=`,`>=`,`==`,`!=`, 不填默认为`==`
+
 示例:
 ```java
     public static void setScreen(MinecraftClient client, Screen screen) {
