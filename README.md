@@ -1,5 +1,23 @@
-# MC多版本代码同步
-Idea插件模式实现多版本代码的同步
+<p align="center">
+  <img src="https://raw.githubusercontent.com/kitUIN/ModMultiVersion/master/src/main/resources/META-INF/pluginIcon.svg" width="350" height="220" alt="ModMultiVersion"></a>
+</p>
+<div align="center">
+
+# ModMultiVersion
+
+✨ 多版本代码同步-Idea插件 ✨
+
+</div>
+<p align="center">
+  <a>
+    <img src="https://img.shields.io/badge/license-MIT-green" alt="license">
+  </a>
+  <a >
+    <img  src="https://img.shields.io/github/v/release/kitUIN/ModMultiVersion" alt="release">
+  </a>
+</p>
+
+
 目前支持:
 - 双向同步
 - 单向同步
