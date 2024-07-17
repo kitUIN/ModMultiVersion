@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import java.io.File
 import io.github.kituin.modmultiversioninterpreter.Interpreter
+
 class FileSaveListener(private val project: Project?) : BulkFileListener {
     private var loaders = arrayOf("fabric", "neoforge", "forge", "quilt")
     private fun copyFile(
@@ -59,77 +60,86 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
         oneWay: Boolean = false
     ) {
         sourceFile.copyTo(targetFile, overwrite = true)
-        val lines = targetFile.readLines()
         var inBlock = false
         var inIfBlock = false
         var inOtherBlock = false
         var inOtherIfBlock = false
         val newLines = mutableListOf<String>()
-        for (line in lines) {
+        for (line in targetFile.readLines()) {
             when {
-                line.startsWith("//") -> {
-                    if (line.startsWith("// IF")) {
+                line.trimStart().startsWith("//") -> {
+                    val lineS = line.trimStart().removePrefix("//").trimStart()
+                    if (lineS.startsWith("IF")) {
                         if (Interpreter(
-                                line.trim().removePrefix("// IF"),
-                                mutableMapOf("$$" to folder)).interpret()) {
+                                lineS.removePrefix("IF"),
+                                mutableMapOf("$$" to folder)
+                            ).interpret()
+                        ) {
                             inBlock = true
                             inIfBlock = true
                         }
                         if (!oneWay) newLines.add(line)
-                    } else if (line.startsWith("// ELSE IF")) {
+                    } else if (lineS.startsWith("ELSE IF")) {
                         inBlock = false
                         if (!inIfBlock && Interpreter(
-                                line.trim().removePrefix("// ELSE IF"),
-                                mutableMapOf("$$" to folder)).interpret()) {
+                                lineS.removePrefix("ELSE IF"),
+                                mutableMapOf("$$" to folder)
+                            ).interpret()
+                        ) {
                             inBlock = true
                             inIfBlock = true
                         }
                         if (!oneWay) newLines.add(line)
-                    } else if (line.startsWith("// ELSE")) {
+                    } else if (lineS.startsWith("ELSE")) {
                         inBlock = false
                         if (!inIfBlock) {
                             inBlock = true
                             inIfBlock = true
                         }
                         if (!oneWay) newLines.add(line)
-                    } else if (line.startsWith("// END IF")) {
+                    } else if (lineS.startsWith("END IF")) {
                         inBlock = false
                         inIfBlock = false
                         if (!oneWay) newLines.add(line)
-                    } else if (inBlock && forward) newLines.add(line.removePrefix("//"))
+                    } else if (inBlock && forward) newLines.add(line.trimStart().removePrefix("//"))
                     else if (!oneWay) newLines.add(line)
                 }
 
-                line.startsWith("#") -> {
-                    if (line.startsWith("# IF")) {
+                line.trimStart().startsWith("#") -> {
+                    val lineS = line.trimStart().removePrefix("#").trimStart()
+                    if (lineS.startsWith("IF")) {
                         if (Interpreter(
-                                line.trim().removePrefix("# IF"),
-                                mutableMapOf("$$" to folder)).interpret()) {
+                                lineS.removePrefix("IF"),
+                                mutableMapOf("$$" to folder)
+                            ).interpret()
+                        ) {
                             inOtherBlock = true
                             inOtherIfBlock = true
                         }
                         if (!oneWay) newLines.add(line)
-                    } else if (line.startsWith("# ELSE IF")) {
+                    } else if (lineS.startsWith("ELSE IF")) {
                         inOtherBlock = false
                         if (!inOtherIfBlock && Interpreter(
-                                line.trim().removePrefix("# ELSE IF"),
-                                mutableMapOf("$$" to folder)).interpret()) {
+                                lineS.removePrefix("ELSE IF"),
+                                mutableMapOf("$$" to folder)
+                            ).interpret()
+                        ) {
                             inOtherBlock = true
                             inOtherIfBlock = true
                         }
                         if (!oneWay) newLines.add(line)
-                    } else if (line.startsWith("# ELSE")) {
+                    } else if (lineS.startsWith("ELSE")) {
                         inOtherBlock = false
                         if (!inOtherIfBlock) {
                             inOtherBlock = true
                             inOtherIfBlock = true
                         }
                         if (!oneWay) newLines.add(line)
-                    } else if (line.startsWith("# END IF")) {
+                    } else if (lineS.startsWith("END IF")) {
                         inOtherBlock = false
                         inOtherIfBlock = false
                         if (!oneWay) newLines.add(line)
-                    } else if (inOtherBlock && forward) newLines.add(line.removePrefix("#"))
+                    } else if (inOtherBlock && forward) newLines.add(line.trimStart().removePrefix("#"))
                     else if (!oneWay) newLines.add(line)
                 }
 
