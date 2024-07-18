@@ -72,17 +72,17 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
                 val lineContent = trimmedLine.removePrefix(it).trimStart()
                 if (i <= 3) {
                     // 文件头部进行检测
-                    val flag = if (hasKey(lineContent, Keys.EXCLUDE) && forward) {
+                    val flag = if (forward && hasKey(lineContent, Keys.EXCLUDE)) {
                         val delete = interpret(lineContent, Keys.EXCLUDE, map)
                         if (delete && targetFile.exists()) targetFile.delete()
                         delete
-                    } else if (hasKey(lineContent, Keys.ONLY) && forward) {
+                    } else if (forward && hasKey(lineContent, Keys.ONLY)) {
                         val delete = !interpret(lineContent, Keys.ONLY, map)
                         if (delete && targetFile.exists()) targetFile.delete()
                         delete
-                    } else if (hasKey(lineContent, Keys.ONEWAY) && forward) {
-                        interpret(lineContent, Keys.ONEWAY, map)
-                    } else if (hasKey(lineContent, Keys.RENAME) && forward) {
+                    } else if (!forward && hasKey(lineContent, Keys.ONEWAY)) {
+                        true
+                    } else if (forward && hasKey(lineContent, Keys.RENAME)) {
                         val rename = replacement(lineContent, Keys.RENAME, map)
                         targetFile = File(folder, rename)
                         false
