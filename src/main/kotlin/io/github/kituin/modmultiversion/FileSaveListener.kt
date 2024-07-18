@@ -30,8 +30,7 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
     private var projectPath = project?.basePath
 
     private fun copyFile(
-        sourceFile: File, moduleContentRoot: VirtualFile, targetFileName: String,
-        loader: String?
+        sourceFile: File, moduleContentRoot: VirtualFile, targetFileName: String, loader: String?
     ) {
         Loaders.values().forEach { loaderF ->
             if (loader != null && loader != loaderF.value) return
@@ -54,8 +53,8 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
             "$$" to folderName,
             "\$folder" to folder.removePrefix("$projectPath/"),
             "\$loader" to loader,
-            "\$fileName" to fileName,
-            "\$fileNameWithoutExtension" to fileNameWithoutExtension
+            "\$fileNameWithoutExtension" to fileNameWithoutExtension,
+            "\$fileName" to fileName
         )
     }
 
@@ -72,16 +71,17 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
 
     private fun processHeader(lineContent: String, lineCtx: LineCtx) {
         // 文件头部进行检测
-        if (BlackOrWhiteList(lineContent, Keys.EXCLUDE, lineCtx) || BlackOrWhiteList(lineContent, Keys.ONLY, lineCtx)) {
-            return
-        } else if (lineCtx.forward && hasKey(lineContent, Keys.RENAME)) {
-            val rename = replacement(lineContent, Keys.RENAME, lineCtx.map)
-            lineCtx.targetFile = File(lineCtx.map["\$folder"], rename)
-            return
-        } else if (hasKey(lineContent, Keys.ONEWAY)) {
-            lineCtx.oneWay = lineCtx.forward
-            lineCtx.header = !lineCtx.forward
-            return
+        when {
+            BlackOrWhiteList(lineContent, Keys.EXCLUDE, lineCtx) || BlackOrWhiteList(lineContent, Keys.ONLY, lineCtx) -> {
+
+            }
+            lineCtx.forward && hasKey(lineContent, Keys.RENAME) -> {
+                val rename = replacement(lineContent, Keys.RENAME, lineCtx.map)
+                lineCtx.targetFile = File(lineCtx.map["\$folder"], rename)
+            }
+            lineCtx.forward && hasKey(lineContent, Keys.ONEWAY) -> {
+                lineCtx.oneWay = true
+            }
         }
     }
 
@@ -116,13 +116,8 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
                 lineCtx.newLines.add(if (lineCtx.forward) trimmedLine.removePrefix(prefix) else "$prefix$line")
                 return
             }
-
-            else -> {
-                lineCtx.newLines.add(line)
-                return
-            }
         }
-        lineCtx.newLines.add(line)
+        if(!lineCtx.oneWay) lineCtx.newLines.add(line)
     }
 
     private fun copy(
@@ -144,7 +139,8 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
                 if (i <= 3) {
                     processHeader(lineContent, lineCtx)
                     if (lineCtx.header) return
-                } else processLine(prefix, line, trimmedLine, lineContent, lineCtx)
+                }
+                else processLine(prefix, line, trimmedLine, lineContent, lineCtx)
             } ?: lineCtx.newLines.add(line)
         }
         lineCtx.targetFile.writeText(lineCtx.newLines.joinToString("\n"))

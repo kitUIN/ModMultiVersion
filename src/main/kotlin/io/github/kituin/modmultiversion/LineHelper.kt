@@ -24,13 +24,14 @@ class LineHelper {
         }
 
         @JvmStatic
-        fun replacement(line: String, key: Keys, replacementMap: Map<String, String>): String{
-            val current = line.removePrefix(key.value)
-            replacementMap.keys.forEach { replaceKey ->
-                current.replace(replaceKey, replacementMap[replaceKey]!!)
+        fun replacement(line: String, key: Keys, replacementMap: Map<String, String>): String {
+            var current = line.removePrefix(key.value).trimStart()
+            replacementMap.forEach { replaceKey, value ->
+                current = current.replace(replaceKey, value)
             }
             return current
         }
+
         @JvmStatic
         fun interpret(line: String, key: Keys, replacementMap: Map<String, String>): Boolean =
             Interpreter(line.removePrefix(key.value), replacementMap).interpret()
