@@ -1,5 +1,6 @@
 package io.github.kituin.modmultiversion.highlight
 
+import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.lang.annotation.HighlightSeverity
@@ -16,13 +17,10 @@ abstract class AbstractCommentHighlighterAnnotator : Annotator {
             val comment = extractCommentTextFromElement(element)
             val startOffset = element.textRange.startOffset
 
-            val highlights = commentHighlighter.getHighlights(comment, startOffset, element.containingFile.virtualFile.path)
+            val highlights = commentHighlighter.getHighlights(comment, startOffset, element.containingFile.virtualFile.path,holder)
 
             for (highlight in highlights) {
-                holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
-                    .range(highlight.first!!)
-                    .textAttributes(highlight.second!!)
-                    .create()
+                highlight.create()
             }
         }
     }
