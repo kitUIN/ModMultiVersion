@@ -8,34 +8,31 @@ import com.intellij.openapi.vfs.findDirectory
 import com.intellij.openapi.vfs.findFile
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.util.io.size
 import io.github.kituin.modmultiversion.LineHelper.Companion.hasKey
 import io.github.kituin.modmultiversion.LineHelper.Companion.interpret
 import io.github.kituin.modmultiversion.LineHelper.Companion.isComment
 import io.github.kituin.modmultiversion.LineHelper.Companion.replacement
 import java.io.File
 import java.nio.file.Path
-import kotlin.io.path.Path
-import kotlin.io.path.name
-import kotlin.io.path.nameWithoutExtension
-import kotlin.io.path.pathString
+import kotlin.io.path.*
 
 class FileSaveListener(private val project: Project?) : BulkFileListener {
     private var projectPath = project?.basePath
 
     private fun copyFile(
-        sourceFile: File,
-        moduleContentRoot: VirtualFile,
-        targetFileName: String,
-        loader: String,
-        relativePath: String
+        sourceFile: File, moduleContentRoot: VirtualFile, targetFileName: String,
+        loader: String?
     ) {
-        val setting = project?.service<SyncSetting>() ?: return
-        moduleContentRoot.findDirectory(loader)?.children?.forEach { loaderFile ->
-            if (loaderFile.isDirectory && loaderFile.name.startsWith(loader)) {
-                copy(
-                    sourceFile, Path("${loaderFile.path}/$targetFileName"), loaderFile.name, loader, true,
-                    setting.state.oneWay.contains(relativePath)
-                )
+        Loaders.values().forEach { loaderF ->
+            if (loader != null && loader != loaderF.value) return
+            moduleContentRoot.findDirectory(loaderF.value)?.children?.forEach { loaderFile ->
+                if (loaderFile.isDirectory && loaderFile.name.startsWith(loaderF.value)) {
+                    copy(
+                        sourceFile, Path("${loaderFile.path}/$targetFileName"),
+                        loaderFile.name, loaderF.value, true
+                    )
+                }
             }
         }
     }
@@ -46,11 +43,11 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
         targetFilePath: Path,
         folderName: String,
         loader: String,
-        forward: Boolean = true,
-        oneWay: Boolean = false
+        forward: Boolean = true
     ) {
         var inBlock = false
         var inIfBlock = false
+        var oneWay = false
         val newLines = mutableListOf<String>()
         val lines = sourceFile.readLines()
         val folder = targetFilePath.parent.pathString
@@ -80,8 +77,9 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
                         val delete = !interpret(lineContent, Keys.ONLY, map)
                         if (delete && targetFile.exists()) targetFile.delete()
                         delete
-                    } else if (!forward && hasKey(lineContent, Keys.ONEWAY)) {
-                        true
+                    } else if (hasKey(lineContent, Keys.ONEWAY)) {
+                        oneWay = forward
+                        !forward
                     } else if (forward && hasKey(lineContent, Keys.RENAME)) {
                         val rename = replacement(lineContent, Keys.RENAME, map)
                         targetFile = File(folder, rename)
@@ -126,55 +124,38 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
         targetFile.writeText(newLines.joinToString("\n"))
     }
 
+    private fun processFile(relativePath: String, sourceFile: File, moduleContentRoot: VirtualFile) {
+        val targetFileName = relativePath.substringAfter("origin/", relativePath)
+        val loader = Loaders.values().firstOrNull { relativePath.startsWith(it.value) }?.value
+        if (relativePath.startsWith("${loader}/origin/")) {
+            copyFile(sourceFile, moduleContentRoot, targetFileName, loader)
+        } else {
+            // 反向更新
+            val sourcePath = Path(relativePath)
+            if (sourcePath.nameCount < 3) return
+            val folder = sourcePath.getName(1).name
+            val subPath = sourcePath.subpath(2, sourcePath.nameCount).pathString
+            val forwardPathName = "$projectPath/$loader/origin/$subPath"
+            var forwardPath = Path(forwardPathName)
+            if (moduleContentRoot.findFile(forwardPathName) == null) {
+                forwardPath = Path(projectPath!!, "origin", subPath)
+                if (!forwardPath.exists()) return
+            }
+            copy(sourceFile, forwardPath, folder, loader!!, false)
+        }
+    }
 
     override fun after(events: List<VFileEvent>) {
         if (project == null) return
         events.forEach { event ->
             val file = event.file ?: return
-            if (projectPath == null) projectPath = project.basePath ?: return
+            projectPath = project.basePath ?: return
             if (!file.isDirectory && file.path.startsWith(projectPath!!)) {
                 val moduleContentRoot =
                     ProjectRootManager.getInstance(project).fileIndex.getContentRootForFile(file) ?: return
                 val relativePath = file.path.removePrefix("$projectPath/")
                 val sourceFile = File(file.path)
-                when {
-                    relativePath.startsWith("origin/") -> {
-                        val targetFileName = relativePath.removePrefix("origin/")
-                        Loaders.values().forEach { loader ->
-                            if (moduleContentRoot.findFile("${loader.value}/$relativePath") == null) {
-                                copyFile(sourceFile, moduleContentRoot, targetFileName, loader.value, file.path)
-                            }
-                        }
-                    }
-
-                    else -> {
-                        val loader = Loaders.values().firstOrNull { relativePath.startsWith(it.value) } ?: return
-                        val prefix = "${loader.value}/origin/"
-                        if (relativePath.startsWith(prefix)) {
-                            copyFile(
-                                sourceFile, moduleContentRoot, relativePath.removePrefix(prefix),
-                                loader.value, file.path
-                            )
-                        } else {
-                            // 反向更新
-                            val (folder, subPath) = relativePath.split("/", limit = 3).let {
-                                if (it.size < 3) return
-                                it[1] to it.drop(2).joinToString("/")
-                            }
-                            val forwardPath = "$projectPath/$prefix$subPath"
-                            if (moduleContentRoot.findFile(forwardPath) != null
-                            ) {
-                                copy(sourceFile, Path(forwardPath), folder, loader.value, false)
-                            } else {
-                                val targetName = "$projectPath/origin/$subPath"
-                                val target = File(targetName)
-                                if (target.exists()) {
-                                    copy(sourceFile, target.toPath(), folder, loader.value, false)
-                                }
-                            }
-                        }
-                    }
-                }
+                processFile(relativePath, sourceFile, moduleContentRoot)
             }
         }
     }
