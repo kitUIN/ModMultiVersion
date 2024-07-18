@@ -25,21 +25,19 @@
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
     <extensions defaultExtensionNs="com.intellij"/>
     <actions>
-        <!--        <group id="io.github.kituin.modmultiversion.syncsetblackgroup" text="多版本同步黑名单"/>-->
-        <!--        <group id="io.github.kituin.modmultiversion.syncsetwhitegroup" text="多版本同步白名单"/>-->
-        <action id="io.github.kituin.modmultiversion.syncsetblack" class="io.github.kituin.modmultiversion.SyncSetBlack"
-                text="多版本同步黑名单">
-            <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
-        </action>
-        <action id="io.github.kituin.modmultiversion.syncsetwhite" class="io.github.kituin.modmultiversion.SyncSetWhite"
-                text="多版本同步白名单">
-            <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
-        </action>
-        <action id="io.github.kituin.modmultiversion.syncsetoneway"
-                class="io.github.kituin.modmultiversion.SyncSetOneWay"
-                text="单向多版本同步">
-            <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
-        </action>
+<!--        <action id="io.github.kituin.modmultiversion.syncsetblack" class="io.github.kituin.modmultiversion.SyncSetBlack"-->
+<!--                text="多版本同步黑名单">-->
+<!--            <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>-->
+<!--        </action>-->
+<!--        <action id="io.github.kituin.modmultiversion.syncsetwhite" class="io.github.kituin.modmultiversion.SyncSetWhite"-->
+<!--                text="多版本同步白名单">-->
+<!--            <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>-->
+<!--        </action>-->
+<!--        <action id="io.github.kituin.modmultiversion.syncsetoneway"-->
+<!--                class="io.github.kituin.modmultiversion.SyncSetOneWay"-->
+<!--                text="单向多版本同步">-->
+<!--            <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>-->
+<!--        </action>-->
     </actions>
     <projectListeners>
         <listener
