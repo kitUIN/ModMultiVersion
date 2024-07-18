@@ -20,6 +20,8 @@ import kotlin.io.path.nameWithoutExtension
 import kotlin.io.path.pathString
 
 class FileSaveListener(private val project: Project?) : BulkFileListener {
+    private var projectPath = project?.basePath
+
     private fun copyFile(
         sourceFile: File,
         moduleContentRoot: VirtualFile,
@@ -56,7 +58,7 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
         val fileNameWithoutExtension = targetFilePath.nameWithoutExtension
         val map = mutableMapOf(
             "$$" to folderName,
-            "\$folder" to folder,
+            "\$folder" to folder.removePrefix("$projectPath/"),
             "\$loader" to loader,
             "\$fileName" to fileName,
             "\$fileNameWithoutExtension" to fileNameWithoutExtension
@@ -88,6 +90,11 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
                     if (flag) return
                 }
                 when {
+                    hasKey(lineContent, Keys.PRINT) -> {
+                        newLines.add(it + replacement(lineContent, Keys.RENAME, map))
+                        return@let
+                    }
+
                     hasKey(lineContent, Keys.ELSE_IF) ->
                         inBlock = inIfBlock && interpret(lineContent, Keys.ELSE_IF, map)
 
@@ -124,8 +131,8 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
         if (project == null) return
         events.forEach { event ->
             val file = event.file ?: return
-            val projectPath = project.basePath ?: return
-            if (!file.isDirectory && file.path.startsWith(projectPath)) {
+            if (projectPath == null) projectPath = project.basePath ?: return
+            if (!file.isDirectory && file.path.startsWith(projectPath!!)) {
                 val moduleContentRoot =
                     ProjectRootManager.getInstance(project).fileIndex.getContentRootForFile(file) ?: return
                 val relativePath = file.path.removePrefix("$projectPath/")

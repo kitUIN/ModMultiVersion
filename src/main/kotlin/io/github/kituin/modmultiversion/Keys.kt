@@ -5,6 +5,7 @@ enum class Keys(val value: String) {
     ONLY("ONLY"),
     ONEWAY("ONEWAY"),
     RENAME("RENAME"),
+    PRINT("PRINT"),
     DEFINE("DEFINE"),
     IF("IF"),
     ELSE("ELSE"),
