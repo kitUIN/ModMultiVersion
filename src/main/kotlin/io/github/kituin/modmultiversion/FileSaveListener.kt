@@ -30,28 +30,10 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
                     targetFName = targetFileName.replace(".json5", ".json")
                 }
                 val targetFile = File(targetFName)
-                if (setting.state.black[relativePath]?.contains(loaderName) == true) {
-//                    println("black")
-                    if (targetFile.exists()) {
-                        targetFile.delete()
-                    }
-                    return@forEach
-                }
-                if (setting.state.white.containsKey(relativePath) && !setting.state.white[relativePath]!!.contains(
-                        loaderName
-                    )
-                ) {
-//                    println("white")
-                    if (targetFile.exists()) {
-                        targetFile.delete()
-                    }
-                    return@forEach
-                }
                 copy(
                     sourceFile, targetFile, loaderFile.name, loader, true,
                     setting.state.oneWay.contains(relativePath)
                 )
-                // loaderFile.refresh(true, false)
             }
         }
     }
@@ -80,14 +62,20 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
                 val lineContent = trimmedLine.removePrefix(it).trimStart()
                 if (i <= 2) {
                     // 文件头部进行检测
+                    var delete = false
                     val flag = if (haveKey(line, Keys.EXCLUDE) && forward) {
-                        interpret(line, Keys.EXCLUDE, map)
+                        delete = interpret(line, Keys.EXCLUDE, map)
+                        delete
                     } else if (haveKey(line, Keys.ONLY) && forward) {
-                        !interpret(line, Keys.ONLY, map)
+                        delete = !interpret(line, Keys.ONLY, map)
+                        delete
                     } else if (haveKey(line, Keys.ONEWAY) && !forward) {
                         interpret(line, Keys.ONEWAY, map)
                     } else false
-                    if (flag) return
+                    if (flag) {
+                        if (delete && targetFile.exists()) targetFile.delete()
+                        return
+                    }
                 }
                 when {
                     haveKey(lineContent, Keys.ELSE_IF) ->
