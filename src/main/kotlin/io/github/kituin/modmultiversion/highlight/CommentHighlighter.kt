@@ -8,7 +8,7 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.TextRange
 import io.github.kituin.modmultiversion.Keys
 import io.github.kituin.modmultiversion.LineHelper
-import io.github.kituin.modmultiversioninterpreter.TokenType
+import io.github.kituin.modmultiversioninterpreter.*
 
 class CommentCtx(var inBlock: Boolean = false, var inIfBlock: Boolean = false)
 
@@ -18,6 +18,20 @@ class CommentHighlighter {
 
     private fun commentStart(startOffset: Int, commentStart: String): Pair<TextRange, TextAttributesKey> {
         return Pair(TextRange(startOffset, startOffset + commentStart.length), COMMENT_START)
+    }
+
+    private fun parseAdd(startOffset: Int, firstIndex: Int, token: Token): Pair<TextRange, TextAttributesKey> {
+        return Pair(
+            TextRange(
+                startOffset + firstIndex + token.startPos,
+                startOffset + firstIndex + token.startPos + token.value.length
+            ),
+            when (token.belong) {
+                TokenBelong.VARIANT -> DefaultLanguageHighlighterColors.LOCAL_VARIABLE
+                TokenBelong.OPERATOR -> DefaultLanguageHighlighterColors.OPERATION_SIGN
+                else -> DefaultLanguageHighlighterColors.STRING
+            }
+        )
     }
 
     private fun keywordAdd(
@@ -49,17 +63,18 @@ class CommentHighlighter {
         firstIndex += key.value.length
         if (key == Keys.IF) {
             MARKS[filePath] = true
-        }else if (key == Keys.END_IF){
-            MARKS[filePath]=false
+        } else if (key == Keys.END_IF) {
+            MARKS[filePath] = false
         }
-        while (firstIndex < text.length) {
-            KEYWORDS.firstOrNull { keyword ->
-                text.startsWith(keyword, firstIndex) && keyword.length <= text.length - firstIndex
-            }?.also { keyword ->
-                highlightAnnotationData.add(keywordAdd(startOffset, firstIndex, keyword.length))
-                firstIndex += keyword.length - 1
+        try {
+            val parser = Parser(Lexer(text.substring(firstIndex)))
+            parser.tokenList.forEach {
+                if (it.startPos >= 0) highlightAnnotationData.add(parseAdd(startOffset, firstIndex, it))
             }
-            firstIndex++
+        } catch (e: ParseException) {
+            if (e.token.type == TokenType.EOF) {
+                return highlightAnnotationData
+            }
         }
         return highlightAnnotationData
     }
