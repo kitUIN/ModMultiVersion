@@ -14,7 +14,7 @@ class LineHelper {
 
 
         @JvmStatic
-        fun haveKey(line: String, key: Keys, unknownComment: Boolean = false): Boolean {
+        fun hasKey(line: String, key: Keys, unknownComment: Boolean = false): Boolean {
             if (unknownComment) {
                 isComment(line)?.let {
                     return line.removePrefix(it).trimStart().startsWith(key.value)
@@ -23,10 +23,17 @@ class LineHelper {
             return line.startsWith(key.value)
         }
 
-
         @JvmStatic
-        fun interpret(line: String, key: Keys, replacement: Map<String, String>): Boolean =
-            Interpreter(line.removePrefix(key.value), replacement).interpret()
+        fun replacement(line: String, key: Keys, replacementMap: Map<String, String>): String{
+            val current = line.removePrefix(key.value)
+            replacementMap.keys.forEach { replaceKey ->
+                current.replace(replaceKey, replacementMap[replaceKey]!!)
+            }
+            return current
+        }
+        @JvmStatic
+        fun interpret(line: String, key: Keys, replacementMap: Map<String, String>): Boolean =
+            Interpreter(line.removePrefix(key.value), replacementMap).interpret()
 
     }
 }

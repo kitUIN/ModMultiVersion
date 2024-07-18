@@ -8,10 +8,16 @@ import com.intellij.openapi.vfs.findDirectory
 import com.intellij.openapi.vfs.findFile
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
-import io.github.kituin.modmultiversion.LineHelper.Companion.haveKey
+import io.github.kituin.modmultiversion.LineHelper.Companion.hasKey
 import io.github.kituin.modmultiversion.LineHelper.Companion.interpret
 import io.github.kituin.modmultiversion.LineHelper.Companion.isComment
+import io.github.kituin.modmultiversion.LineHelper.Companion.replacement
 import java.io.File
+import java.nio.file.Path
+import kotlin.io.path.Path
+import kotlin.io.path.name
+import kotlin.io.path.nameWithoutExtension
+import kotlin.io.path.pathString
 
 class FileSaveListener(private val project: Project?) : BulkFileListener {
     private fun copyFile(
@@ -24,14 +30,8 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
         val setting = project?.service<SyncSetting>() ?: return
         moduleContentRoot.findDirectory(loader)?.children?.forEach { loaderFile ->
             if (loaderFile.isDirectory && loaderFile.name.startsWith(loader)) {
-                val loaderName = "$loader/${loaderFile.name}"
-                var targetFName = "${loaderFile.path}/$targetFileName"
-                if (relativePath.endsWith(".json5") && setting.state.replaceJson5) {
-                    targetFName = targetFileName.replace(".json5", ".json")
-                }
-                val targetFile = File(targetFName)
                 copy(
-                    sourceFile, targetFile, loaderFile.name, loader, true,
+                    sourceFile, Path("${loaderFile.path}/$targetFileName"), loaderFile.name, loader, true,
                     setting.state.oneWay.contains(relativePath)
                 )
             }
@@ -40,8 +40,9 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
 
 
     private fun copy(
-        sourceFile: File, targetFile: File,
-        folder: String,
+        sourceFile: File,
+        targetFilePath: Path,
+        folderName: String,
         loader: String,
         forward: Boolean = true,
         oneWay: Boolean = false
@@ -50,44 +51,53 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
         var inIfBlock = false
         val newLines = mutableListOf<String>()
         val lines = sourceFile.readLines()
+        val folder = targetFilePath.parent.pathString
+        val fileName = targetFilePath.name
+        val fileNameWithoutExtension = targetFilePath.nameWithoutExtension
         val map = mutableMapOf(
-            "$$" to folder,
-            "\$loader" to loader
+            "$$" to folderName,
+            "\$folder" to folder,
+            "\$loader" to loader,
+            "\$fileName" to fileName,
+            "\$fileNameWithoutExtension" to fileNameWithoutExtension
         )
+        var targetFile = targetFilePath.toFile()
         for (i in lines.indices) {
             val line = lines[i]
             val trimmedLine = line.trimStart()
             val prefix = isComment(trimmedLine)
             prefix?.let {
                 val lineContent = trimmedLine.removePrefix(it).trimStart()
-                if (i <= 2) {
+                if (i <= 3) {
                     // 文件头部进行检测
-                    var delete = false
-                    val flag = if (haveKey(line, Keys.EXCLUDE) && forward) {
-                        delete = interpret(line, Keys.EXCLUDE, map)
-                        delete
-                    } else if (haveKey(line, Keys.ONLY) && forward) {
-                        delete = !interpret(line, Keys.ONLY, map)
-                        delete
-                    } else if (haveKey(line, Keys.ONEWAY) && !forward) {
-                        interpret(line, Keys.ONEWAY, map)
-                    } else false
-                    if (flag) {
+                    val flag = if (hasKey(lineContent, Keys.EXCLUDE) && forward) {
+                        val delete = interpret(lineContent, Keys.EXCLUDE, map)
                         if (delete && targetFile.exists()) targetFile.delete()
-                        return
-                    }
+                        delete
+                    } else if (hasKey(lineContent, Keys.ONLY) && forward) {
+                        val delete = !interpret(lineContent, Keys.ONLY, map)
+                        if (delete && targetFile.exists()) targetFile.delete()
+                        delete
+                    } else if (hasKey(lineContent, Keys.ONEWAY) && forward) {
+                        interpret(lineContent, Keys.ONEWAY, map)
+                    } else if (hasKey(lineContent, Keys.RENAME) && forward) {
+                        val rename = replacement(lineContent, Keys.RENAME, map)
+                        targetFile = File(folder, rename)
+                        false
+                    } else false
+                    if (flag) return
                 }
                 when {
-                    haveKey(lineContent, Keys.ELSE_IF) ->
+                    hasKey(lineContent, Keys.ELSE_IF) ->
                         inBlock = inIfBlock && interpret(lineContent, Keys.ELSE_IF, map)
 
-                    haveKey(lineContent, Keys.IF) -> {
+                    hasKey(lineContent, Keys.IF) -> {
                         inBlock = interpret(lineContent, Keys.IF, map)
                         inIfBlock = true
                     }
 
-                    haveKey(lineContent, Keys.ELSE) && inIfBlock -> inBlock = !inBlock
-                    haveKey(lineContent, Keys.END_IF) -> {
+                    hasKey(lineContent, Keys.ELSE) && inIfBlock -> inBlock = !inBlock
+                    hasKey(lineContent, Keys.END_IF) -> {
                         inBlock = false
                         inIfBlock = false
                     }
@@ -145,16 +155,14 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
                                 it[1] to it.drop(2).joinToString("/")
                             }
                             val forwardPath = "$projectPath/$prefix$subPath"
-                            val setting = project.service<SyncSetting>()
-                            if (moduleContentRoot.findFile(forwardPath) != null &&
-                                !setting.state.oneWay.contains(forwardPath)
+                            if (moduleContentRoot.findFile(forwardPath) != null
                             ) {
-                                copy(sourceFile, File(forwardPath), folder, loader.value, false)
+                                copy(sourceFile, Path(forwardPath), folder, loader.value, false)
                             } else {
                                 val targetName = "$projectPath/origin/$subPath"
                                 val target = File(targetName)
-                                if (target.exists() && !setting.state.oneWay.contains(targetName)) {
-                                    copy(sourceFile, target, folder, loader.value, false)
+                                if (target.exists()) {
+                                    copy(sourceFile, target.toPath(), folder, loader.value, false)
                                 }
                             }
                         }

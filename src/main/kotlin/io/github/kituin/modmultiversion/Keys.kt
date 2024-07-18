@@ -4,6 +4,7 @@ enum class Keys(val value: String) {
     EXCLUDE("EXCLUDE"),
     ONLY("ONLY"),
     ONEWAY("ONEWAY"),
+    RENAME("RENAME"),
     DEFINE("DEFINE"),
     IF("IF"),
     ELSE("ELSE"),
