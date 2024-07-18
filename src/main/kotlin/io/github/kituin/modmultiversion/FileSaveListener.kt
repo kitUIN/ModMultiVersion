@@ -8,6 +8,9 @@ import com.intellij.openapi.vfs.findDirectory
 import com.intellij.openapi.vfs.findFile
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import io.github.kituin.modmultiversion.LineHelper.Companion.haveKey
+import io.github.kituin.modmultiversion.LineHelper.Companion.interpret
+import io.github.kituin.modmultiversion.LineHelper.Companion.isComment
 import java.io.File
 import io.github.kituin.modmultiversioninterpreter.Interpreter
 
@@ -24,11 +27,11 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
         moduleContentRoot.findDirectory(loader)?.children?.forEach { loaderFile ->
             if (loaderFile.isDirectory && loaderFile.name.startsWith(loader)) {
                 val loaderName = "$loader/${loaderFile.name}"
-                var targetFileName = "${loaderFile.path}/$targetFileName"
+                var targetFName = "${loaderFile.path}/$targetFileName"
                 if (relativePath.endsWith(".json5") && setting.state.replaceJson5) {
-                    targetFileName = targetFileName.replace(".json5", ".json")
+                    targetFName = targetFileName.replace(".json5", ".json")
                 }
-                val targetFile = File(targetFileName)
+                val targetFile = File(targetFName)
                 if (setting.state.black[relativePath]?.contains(loaderName) == true) {
 //                    println("black")
                     if (targetFile.exists()) {
@@ -59,102 +62,48 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
         forward: Boolean = true,
         oneWay: Boolean = false
     ) {
-        sourceFile.copyTo(targetFile, overwrite = true)
         var inBlock = false
         var inIfBlock = false
-        var inOtherBlock = false
-        var inOtherIfBlock = false
         val newLines = mutableListOf<String>()
-        for (line in targetFile.readLines()) {
-            when {
-                line.trimStart().startsWith("//") -> {
-                    val lineS = line.trimStart().removePrefix("//").trimStart()
-                    if (lineS.startsWith("IF")) {
-                        if (Interpreter(
-                                lineS.removePrefix("IF"),
-                                mutableMapOf("$$" to folder)
-                            ).interpret()
-                        ) {
-                            inBlock = true
-                            inIfBlock = true
-                        }
-                        if (!oneWay) newLines.add(line)
-                    } else if (lineS.startsWith("ELSE IF")) {
-                        inBlock = false
-                        if (!inIfBlock && Interpreter(
-                                lineS.removePrefix("ELSE IF"),
-                                mutableMapOf("$$" to folder)
-                            ).interpret()
-                        ) {
-                            inBlock = true
-                            inIfBlock = true
-                        }
-                        if (!oneWay) newLines.add(line)
-                    } else if (lineS.startsWith("ELSE")) {
-                        inBlock = false
-                        if (!inIfBlock) {
-                            inBlock = true
-                            inIfBlock = true
-                        }
-                        if (!oneWay) newLines.add(line)
-                    } else if (lineS.startsWith("END IF")) {
-                        inBlock = false
-                        inIfBlock = false
-                        if (!oneWay) newLines.add(line)
-                    } else if (inBlock && forward) newLines.add(line.trimStart().removePrefix("//"))
-                    else if (!oneWay) newLines.add(line)
-                }
-
-                line.trimStart().startsWith("#") -> {
-                    val lineS = line.trimStart().removePrefix("#").trimStart()
-                    if (lineS.startsWith("IF")) {
-                        if (Interpreter(
-                                lineS.removePrefix("IF"),
-                                mutableMapOf("$$" to folder)
-                            ).interpret()
-                        ) {
-                            inOtherBlock = true
-                            inOtherIfBlock = true
-                        }
-                        if (!oneWay) newLines.add(line)
-                    } else if (lineS.startsWith("ELSE IF")) {
-                        inOtherBlock = false
-                        if (!inOtherIfBlock && Interpreter(
-                                lineS.removePrefix("ELSE IF"),
-                                mutableMapOf("$$" to folder)
-                            ).interpret()
-                        ) {
-                            inOtherBlock = true
-                            inOtherIfBlock = true
-                        }
-                        if (!oneWay) newLines.add(line)
-                    } else if (lineS.startsWith("ELSE")) {
-                        inOtherBlock = false
-                        if (!inOtherIfBlock) {
-                            inOtherBlock = true
-                            inOtherIfBlock = true
-                        }
-                        if (!oneWay) newLines.add(line)
-                    } else if (lineS.startsWith("END IF")) {
-                        inOtherBlock = false
-                        inOtherIfBlock = false
-                        if (!oneWay) newLines.add(line)
-                    } else if (inOtherBlock && forward) newLines.add(line.trimStart().removePrefix("#"))
-                    else if (!oneWay) newLines.add(line)
-                }
-
-                inBlock && !forward -> {
-                    newLines.add("//$line")
-                }
-
-                inOtherBlock && !forward -> {
-                    newLines.add("#$line")
-                }
-
-                else -> {
-                    newLines.add(line)
-                }
+        val lines = sourceFile.readLines()
+        val map = mutableMapOf("$$" to folder)
+        if (lines.isNotEmpty()) {
+            val firstLine = lines[0].trimStart()
+            val flag = if (haveKey(firstLine, Keys.EXCLUDE)) {
+                interpret(firstLine, Keys.EXCLUDE, map)
+            } else if (haveKey(firstLine, Keys.ONLY)) {
+                !interpret(firstLine, Keys.ONLY, map)
+            } else false
+            if (flag) return
+        }
+        for (line in lines) {
+            val trimmedLine = line.trimStart()
+            val prefix = isComment(trimmedLine)
+            if (prefix == null) {
+                newLines.add(line)
+                continue
             }
+            val lineContent = trimmedLine.removePrefix(prefix).trimStart()
+            if (haveKey(lineContent, Keys.ELSE_IF, true)) {
+                inBlock = inIfBlock && interpret(lineContent, Keys.ELSE_IF, map)
+            } else if (haveKey(lineContent, Keys.IF, true)) {
+                inBlock = interpret(lineContent, Keys.IF, map)
+                inIfBlock = true
+            } else if (haveKey(lineContent, Keys.ELSE, true)) {
+                if (inIfBlock) {
+                    inBlock = !inBlock
+                }
+            } else if (haveKey(lineContent, Keys.END_IF, true)) {
+                inBlock = false
+                inIfBlock = false
+            } else if (inBlock) {
+                newLines.add(if (forward) trimmedLine.removePrefix(prefix) else "$prefix$line")
+                continue
+            } else {
+                newLines.add(line)
+                continue
+            }
+            if (!oneWay) newLines.add(line)
         }
         targetFile.writeText(newLines.joinToString("\n"))
     }
