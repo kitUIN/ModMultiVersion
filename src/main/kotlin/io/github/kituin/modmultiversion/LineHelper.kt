@@ -14,8 +14,8 @@ class LineHelper {
 
 
         @JvmStatic
-        fun haveKey(line: String, key: Keys, confirmComment: Boolean = false): Boolean {
-            if (!confirmComment) {
+        fun haveKey(line: String, key: Keys, unknownComment: Boolean = false): Boolean {
+            if (unknownComment) {
                 isComment(line)?.let {
                     return line.removePrefix(it).trimStart().startsWith(key.value)
                 } ?: return false

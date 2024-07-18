@@ -3,6 +3,7 @@ package io.github.kituin.modmultiversion
 enum class Keys(val value: String) {
     EXCLUDE("EXCLUDE"),
     ONLY("ONLY"),
+    ONEWAY("ONEWAY"),
     DEFINE("DEFINE"),
     IF("IF"),
     ELSE("ELSE"),

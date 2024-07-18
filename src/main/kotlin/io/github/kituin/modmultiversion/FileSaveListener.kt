@@ -12,7 +12,6 @@ import io.github.kituin.modmultiversion.LineHelper.Companion.haveKey
 import io.github.kituin.modmultiversion.LineHelper.Companion.interpret
 import io.github.kituin.modmultiversion.LineHelper.Companion.isComment
 import java.io.File
-import io.github.kituin.modmultiversioninterpreter.Interpreter
 
 class FileSaveListener(private val project: Project?) : BulkFileListener {
     private var loaders = arrayOf("fabric", "neoforge", "forge", "quilt")
@@ -67,99 +66,103 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
         val newLines = mutableListOf<String>()
         val lines = sourceFile.readLines()
         val map = mutableMapOf("$$" to folder)
-        if (lines.isNotEmpty()) {
-            val firstLine = lines[0].trimStart()
-            val flag = if (haveKey(firstLine, Keys.EXCLUDE)) {
-                interpret(firstLine, Keys.EXCLUDE, map)
-            } else if (haveKey(firstLine, Keys.ONLY)) {
-                !interpret(firstLine, Keys.ONLY, map)
-            } else false
-            if (flag) return
-        }
-        for (line in lines) {
+        for (i in lines.indices){
+            val line = lines[i]
             val trimmedLine = line.trimStart()
             val prefix = isComment(trimmedLine)
-            if (prefix == null) {
-                newLines.add(line)
-                continue
-            }
-            val lineContent = trimmedLine.removePrefix(prefix).trimStart()
-            if (haveKey(lineContent, Keys.ELSE_IF, true)) {
-                inBlock = inIfBlock && interpret(lineContent, Keys.ELSE_IF, map)
-            } else if (haveKey(lineContent, Keys.IF, true)) {
-                inBlock = interpret(lineContent, Keys.IF, map)
-                inIfBlock = true
-            } else if (haveKey(lineContent, Keys.ELSE, true)) {
-                if (inIfBlock) {
-                    inBlock = !inBlock
+            prefix?.let {
+                val lineContent = trimmedLine.removePrefix(it).trimStart()
+                if(i<=2){
+                    // 文件头部进行检测
+                    val flag = if (haveKey(line, Keys.EXCLUDE) && forward) {
+                        interpret(line, Keys.EXCLUDE, map)
+                    } else if (haveKey(line, Keys.ONLY) && forward) {
+                        !interpret(line, Keys.ONLY, map)
+                    } else if (haveKey(line, Keys.ONEWAY) && !forward) {
+                        interpret(line, Keys.ONEWAY, map)
+                    } else false
+                    if (flag) return
                 }
-            } else if (haveKey(lineContent, Keys.END_IF, true)) {
-                inBlock = false
-                inIfBlock = false
-            } else if (inBlock) {
-                newLines.add(if (forward) trimmedLine.removePrefix(prefix) else "$prefix$line")
-                continue
-            } else {
-                newLines.add(line)
-                continue
-            }
-            if (!oneWay) newLines.add(line)
+                when {
+                    haveKey(lineContent, Keys.ELSE_IF) ->
+                        inBlock = inIfBlock && interpret(lineContent, Keys.ELSE_IF, map)
+
+                    haveKey(lineContent, Keys.IF) -> {
+                        inBlock = interpret(lineContent, Keys.IF, map)
+                        inIfBlock = true
+                    }
+
+                    haveKey(lineContent, Keys.ELSE) && inIfBlock -> inBlock = !inBlock
+                    haveKey(lineContent, Keys.END_IF) -> {
+                        inBlock = false
+                        inIfBlock = false
+                    }
+
+                    inBlock -> {
+                        newLines.add(if (forward) trimmedLine.removePrefix(it) else "$it$line")
+                        return@let
+                    }
+
+                    else -> {
+                        newLines.add(line)
+                        return@let
+                    }
+                }
+                if (!oneWay) newLines.add(line)
+            } ?: newLines.add(line)
         }
+
         targetFile.writeText(newLines.joinToString("\n"))
     }
 
 
     override fun after(events: List<VFileEvent>) {
         if (project == null) return
-        val projectPath = project.basePath
-        val projectFileIndex = ProjectRootManager.getInstance(project).fileIndex
         events.forEach { event ->
-            val file = event.file
-            if (file != null && projectPath != null && !file.isDirectory && file.path.startsWith(projectPath)) {
-//                println(file.path)
-                val moduleContentRoot = projectFileIndex.getContentRootForFile(file) ?: return
+            val file = event.file ?: return
+            val projectPath = project.basePath ?: return
+            if (!file.isDirectory && file.path.startsWith(projectPath)) {
+                val moduleContentRoot =
+                    ProjectRootManager.getInstance(project).fileIndex.getContentRootForFile(file) ?: return
                 val relativePath = file.path.removePrefix("$projectPath/")
                 val sourceFile = File(file.path)
-                // 默认设置
-                if (relativePath.startsWith("origin/")) {
-                    val targetFileName = relativePath.removePrefix("origin/")
-                    for (loader in loaders) {
-                        if (moduleContentRoot.findFile("$loader/$relativePath") != null) {
-                            // 如果有加载器特有的文件,则不复制
-                            continue
+                when {
+                    relativePath.startsWith("origin/") -> {
+                        val targetFileName = relativePath.removePrefix("origin/")
+                        loaders.forEach { loader ->
+                            if (moduleContentRoot.findFile("$loader/$relativePath") == null) {
+                                copyFile(sourceFile, moduleContentRoot, targetFileName, loader, file.path)
+                            }
                         }
-                        copyFile(sourceFile, moduleContentRoot, targetFileName, loader, file.path)
                     }
-                } else {
-                    val loader = loaders.firstOrNull { relativePath.startsWith(it) } ?: return
-                    if (relativePath.startsWith("$loader/origin/")) {
+
+                    else -> {
+                        val loader = loaders.firstOrNull { relativePath.startsWith(it) } ?: return
                         val targetFileName = relativePath.removePrefix("$loader/origin/")
-                        copyFile(sourceFile, moduleContentRoot, targetFileName, loader, file.path)
-                    } else { // 反向更新
-                        var folder: String
-                        val subList = relativePath.split("/").let {
-                            if (it.count() < 2) return
-                            folder = it[1]
-                            it.subList(2, it.count())
-                        }
-                        val subPath = subList.joinToString(separator = "/")
-                        val forwardPath = "$projectPath/$loader/origin/$subPath"
-                        val setting = project.service<SyncSetting>()
-                        if (moduleContentRoot.findFile(forwardPath) != null &&
-                            !setting.state.oneWay.contains(forwardPath)
-                        ) {
-                            // 如果有加载器特有的文件
-                            copy(sourceFile, File(forwardPath), folder, false)
+                        if (relativePath.startsWith("$loader/origin/")) {
+                            copyFile(sourceFile, moduleContentRoot, targetFileName, loader, file.path)
                         } else {
-                            val targetName = "$projectPath/origin/$subPath"
-                            val target = File(targetName)
-                            if (target.exists() && !setting.state.oneWay.contains(targetName)) {
-                                copy(sourceFile, target, folder, false)
+                            // 反向更新
+                            val (folder, subPath) = relativePath.split("/", limit = 3).let {
+                                if (it.size < 3) return
+                                it[1] to it.drop(2).joinToString("/")
+                            }
+                            val forwardPath = "$projectPath/$loader/origin/$subPath"
+                            val setting = project.service<SyncSetting>()
+                            if (moduleContentRoot.findFile(forwardPath) != null &&
+                                !setting.state.oneWay.contains(forwardPath)
+                            ) {
+                                copy(sourceFile, File(forwardPath), folder, false)
+                            } else {
+                                val targetName = "$projectPath/origin/$subPath"
+                                val target = File(targetName)
+                                if (target.exists() && !setting.state.oneWay.contains(targetName)) {
+                                    copy(sourceFile, target, folder, false)
+                                }
                             }
                         }
                     }
                 }
-
             }
         }
     }
