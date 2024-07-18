@@ -23,7 +23,13 @@
 
     <!-- Extension points defined by the plugin.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
-    <extensions defaultExtensionNs="com.intellij"/>
+    <extensions defaultExtensionNs="com.intellij">
+
+        <additionalTextAttributes scheme="Default" file="colorSchemes/highlightTokens.xml"/>
+        <additionalTextAttributes scheme="Darcula" file="colorSchemes/highlightTokens.xml"/>
+        <annotator language=""
+                   implementationClass="io.github.kituin.modmultiversion.highlight.GenericCommentHighlighterAnnotator"/>
+    </extensions>
     <actions>
 <!--        <action id="io.github.kituin.modmultiversion.syncsetblack" class="io.github.kituin.modmultiversion.SyncSetBlack"-->
 <!--                text="多版本同步黑名单">-->

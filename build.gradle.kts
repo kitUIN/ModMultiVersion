@@ -1,16 +1,15 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-
 plugins {
     id("java")
     id("org.jetbrains.kotlin.jvm") version "1.9.24"
-    id("org.jetbrains.intellij") version "1.17.3"
+    id("org.jetbrains.intellij.platform") version "2.0.0-beta9"
     id("com.github.johnrengelman.shadow") version "7.0.0"
 }
 
 val shadowImplementation by configurations.creating
 configurations["compileOnly"].extendsFrom(shadowImplementation)
 configurations["testImplementation"].extendsFrom(shadowImplementation)
-val interpreter_version: String by project
+val interpreterVersion: String by project
 group = "io.github.kituin"
 version = project.version
 
@@ -20,19 +19,23 @@ repositories {
         name = "kituinMavenReleases"
         url = uri("https://maven.kituin.fun/releases")
     }
+    intellijPlatform {
+        defaultRepositories()
+    }
 }
 
 dependencies {
-    shadowImplementation("io.github.kituin:ModMultiVersionInterpreter:${interpreter_version}")
-}
-// Configure Gradle IntelliJ Plugin
-// Read more: https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html
-intellij {
-    version.set("2023.2.6")
-    type.set("IC") // Target IDE Platform
+    intellijPlatform {
+        val type = providers.gradleProperty("platformType")
+        val version = providers.gradleProperty("platformVersion")
 
-    plugins.set(listOf(/* Plugin Dependencies */))
+        create(type, version)
+        instrumentationTools()
+
+    }
+    implementation("io.github.kituin:ModMultiVersionInterpreter:${interpreterVersion}")
 }
+
 
 tasks {
     // Set the JVM compatibility versions
@@ -43,7 +46,6 @@ tasks {
     withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
         kotlinOptions.jvmTarget = "17"
     }
-
     patchPluginXml {
         sinceBuild.set("232")
         untilBuild.set("242.*")
@@ -61,7 +63,7 @@ tasks {
 }
 val shadowJarTask = tasks.named<ShadowJar>("shadowJar") {
     dependencies {
-        include(dependency("io.github.kituin:ModMultiVersionInterpreter:${interpreter_version}"))
+        include(dependency("io.github.kituin:ModMultiVersionInterpreter:${interpreterVersion}"))
     }
     // automatically remove all classes of dependencies that are not used by the project
     minimize()
