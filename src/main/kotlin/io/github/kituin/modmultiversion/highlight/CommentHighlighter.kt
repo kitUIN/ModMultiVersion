@@ -38,6 +38,17 @@ class CommentHighlighter {
             )
     }
 
+    private fun parseError(
+        startOffset: Int,
+        token: Token,
+        holder: AnnotationHolder,
+        message: String
+    ): AnnotationBuilder {
+        return holder.newAnnotation(HighlightSeverity.ERROR, message)
+            .range(TextRange(startOffset, startOffset + token.value.length))
+
+    }
+
     private fun keywordAdd(startOffset: Int, length: Int, holder: AnnotationHolder): AnnotationBuilder {
         return holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
             .range(TextRange(startOffset, startOffset + length))
@@ -74,15 +85,20 @@ class CommentHighlighter {
             val parser = Parser(Lexer(text.substring(firstIndex)))
             parser.tokenList.forEach {
                 if (it.startPos >= 0) highlightAnnotationData.add(
-                    parseAdd(startOffset + firstIndex + it.startPos, it, holder).tooltip(it.type.toString())
+                    parseAdd(startOffset + firstIndex + it.startPos, it, holder)
                 )
             }
-            // parser.parse()
+            parser.parse()
         } catch (e: ParseException) {
-            if (e.token.type == TokenType.EOF) {
-                return highlightAnnotationData
-            } else {
-
+            if (e.token.type != TokenType.EOF) {
+                highlightAnnotationData.add(
+                    parseError(
+                        startOffset + firstIndex + e.token.startPos,
+                        e.token,
+                        holder,
+                        "Error"
+                    )
+                )
             }
         }
         return highlightAnnotationData
