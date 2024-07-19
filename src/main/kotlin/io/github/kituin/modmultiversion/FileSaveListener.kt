@@ -21,10 +21,17 @@ class LineCtx(
     val forward: Boolean,
     val newLines: MutableList<String> = mutableListOf(),
     var inBlock: Boolean = false,
+    var used: Boolean = false,
     var inIfBlock: Boolean = false,
     var oneWay: Boolean = false,
     var header: Boolean = false
-)
+) {
+    fun clean() {
+        this.inBlock = false
+        this.inIfBlock = false
+        this.used = false
+    }
+}
 
 class FileSaveListener(private val project: Project?) : BulkFileListener {
     private var projectPath = project?.basePath
@@ -32,7 +39,7 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
     private fun copyFile(
         sourceFile: File, moduleContentRoot: VirtualFile, targetFileName: String, loader: String?
     ) {
-        Loaders.values().forEach { loaderF ->
+        Loaders.entries.forEach { loaderF ->
             if (loader != null && loader != loaderF.value) return
             moduleContentRoot.findDirectory(loaderF.value)?.children?.forEach { loaderFile ->
                 if (loaderFile.isDirectory && loaderFile.name.startsWith(loaderF.value)) {
@@ -58,7 +65,7 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
         )
     }
 
-    private fun BlackOrWhiteList(lineContent: String, key: Keys, lineCtx: LineCtx): Boolean {
+    private fun blackOrWhiteList(lineContent: String, key: Keys, lineCtx: LineCtx): Boolean {
         if (lineCtx.forward && hasKey(lineContent, key)) {
             var delete = interpret(lineContent, key, lineCtx.map)
             if (key == Keys.ONLY) delete = !delete
@@ -72,52 +79,63 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
     private fun processHeader(lineContent: String, lineCtx: LineCtx) {
         // 文件头部进行检测
         when {
-            BlackOrWhiteList(lineContent, Keys.EXCLUDE, lineCtx) || BlackOrWhiteList(lineContent, Keys.ONLY, lineCtx) -> {
+            blackOrWhiteList(lineContent, Keys.EXCLUDE, lineCtx) || blackOrWhiteList(
+                lineContent,
+                Keys.ONLY,
+                lineCtx
+            ) -> {
 
             }
+
             lineCtx.forward && hasKey(lineContent, Keys.RENAME) -> {
                 val rename = replacement(lineContent, Keys.RENAME, lineCtx.map)
                 lineCtx.targetFile = File(lineCtx.map["\$folder"], rename)
             }
+
             lineCtx.forward && hasKey(lineContent, Keys.ONEWAY) -> {
                 lineCtx.oneWay = true
             }
         }
     }
 
-    private fun processLine(
-        prefix: String,
-        line: String,
-        trimmedLine: String,
-        lineContent: String,
-        lineCtx: LineCtx
-    ) {
+    private fun processLine(prefix: String, line: String, trimmedLine: String, lineContent: String, lineCtx: LineCtx) {
         when {
-            hasKey(lineContent, Keys.PRINT) -> {
-                lineCtx.newLines.add(prefix + replacement(lineContent, Keys.RENAME, lineCtx.map))
-                return
-            }
+            hasKey(lineContent, Keys.PRINT) && lineCtx.forward -> lineCtx.newLines.add(
+                "$prefix ${
+                    replacement(
+                        lineContent,
+                        Keys.RENAME,
+                        lineCtx.map
+                    )
+                }"
+            )
 
-            hasKey(lineContent, Keys.ELSE_IF) ->
-                lineCtx.inBlock = lineCtx.inIfBlock && interpret(lineContent, Keys.ELSE_IF, lineCtx.map)
+            hasKey(lineContent, Keys.ELSE_IF) -> {
+                lineCtx.inBlock = if (lineCtx.inIfBlock) !lineCtx.inBlock && interpret(
+                    lineContent,
+                    Keys.ELSE_IF,
+                    lineCtx.map
+                ) else lineCtx.inBlock
+                if (lineCtx.inBlock) lineCtx.used = true
+            }
 
             hasKey(lineContent, Keys.IF) -> {
                 lineCtx.inBlock = interpret(lineContent, Keys.IF, lineCtx.map)
+                lineCtx.used = lineCtx.inBlock
                 lineCtx.inIfBlock = true
             }
 
-            hasKey(lineContent, Keys.ELSE) && lineCtx.inIfBlock -> lineCtx.inBlock = !lineCtx.inBlock
-            hasKey(lineContent, Keys.END_IF) -> {
-                lineCtx.inBlock = false
-                lineCtx.inIfBlock = false
+            hasKey(lineContent, Keys.ELSE) && lineCtx.inIfBlock && !lineCtx.used -> {
+                lineCtx.inBlock = !lineCtx.inBlock
             }
 
+            hasKey(lineContent, Keys.END_IF) -> lineCtx.clean()
             lineCtx.inBlock -> {
                 lineCtx.newLines.add(if (lineCtx.forward) trimmedLine.removePrefix(prefix) else "$prefix$line")
                 return
             }
         }
-        if(!lineCtx.oneWay) lineCtx.newLines.add(line)
+        if (!lineCtx.oneWay) lineCtx.newLines.add(line)
     }
 
     private fun copy(
@@ -140,7 +158,7 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
                     processHeader(lineContent, lineCtx)
                     if (lineCtx.header) return
                 }
-                else processLine(prefix, line, trimmedLine, lineContent, lineCtx)
+                processLine(prefix, line, trimmedLine, lineContent, lineCtx)
             } ?: lineCtx.newLines.add(line)
         }
         lineCtx.targetFile.writeText(lineCtx.newLines.joinToString("\n"))
@@ -148,7 +166,7 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
 
     private fun processFile(relativePath: String, sourceFile: File, moduleContentRoot: VirtualFile) {
         val targetFileName = relativePath.substringAfter("origin/", relativePath)
-        val loader = Loaders.values().firstOrNull { relativePath.startsWith(it.value) }?.value
+        val loader = Loaders.entries.firstOrNull { relativePath.startsWith(it.value) }?.value
         if (relativePath.startsWith("${loader}/origin/")) {
             copyFile(sourceFile, moduleContentRoot, targetFileName, loader)
         } else {

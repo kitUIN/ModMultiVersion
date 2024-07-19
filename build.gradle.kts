@@ -36,7 +36,6 @@ dependencies {
     implementation("io.github.kituin:ModMultiVersionInterpreter:${interpreterVersion}")
 }
 
-
 tasks {
     // Set the JVM compatibility versions
     withType<JavaCompile> {
@@ -62,6 +61,7 @@ tasks {
     }
 }
 val shadowJarTask = tasks.named<ShadowJar>("shadowJar") {
+    // dependsOn(tasks.named("prepareTestSandbox"))
     dependencies {
         include(dependency("io.github.kituin:ModMultiVersionInterpreter:${interpreterVersion}"))
     }
@@ -78,6 +78,6 @@ configurations {
         apiElements(shadowJarTask)
     }
 }
-tasks.named("build") {
-    dependsOn(shadowJarTask)
-}
+//tasks.named("build") {
+//    dependsOn(shadowJarTask)
+//}
