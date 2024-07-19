@@ -101,7 +101,7 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
 
     private fun processLine(prefix: String, line: String, trimmedLine: String, lineContent: String, lineCtx: LineCtx) {
         when {
-            hasKey(lineContent, Keys.PRINT) && lineCtx.forward ->{
+            hasKey(lineContent, Keys.PRINT) && lineCtx.forward -> {
                 lineCtx.newLines.add(
                     "$prefix ${
                         replacement(
@@ -142,6 +142,17 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
         if (!lineCtx.oneWay || hasKey(lineContent, Keys.ONEWAY)) lineCtx.newLines.add(line)
     }
 
+
+    private fun checkTargetOneWay(targetFile: File): Boolean {
+        targetFile.bufferedReader().use { reader ->
+            var line: String?
+            if (reader.readLine().also { line = it } != null) {
+                if (hasKey(line!!.trimStart(), Keys.ONEWAY, true)) return true
+            }
+        }
+        return false
+    }
+
     private fun copy(
         sourceFile: File,
         targetFilePath: Path,
@@ -151,7 +162,10 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
     ) {
         val lines = sourceFile.readLines()
         val map = createMap(folderName, targetFilePath, loader)
-        val lineCtx = LineCtx(targetFilePath.toFile(), map, forward)
+        val targetFile = targetFilePath.toFile()
+        // 反向时检测是否是ONEWAY
+        if (!forward && checkTargetOneWay(targetFile)) return
+        val lineCtx = LineCtx(targetFile, map, forward)
         for (i in lines.indices) {
             val line = lines[i]
             val trimmedLine = line.trimStart()
