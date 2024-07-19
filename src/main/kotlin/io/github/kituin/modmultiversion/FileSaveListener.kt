@@ -92,7 +92,8 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
                 lineCtx.targetFile = File(lineCtx.map["\$folder"], rename)
             }
 
-            lineCtx.forward && hasKey(lineContent, Keys.ONEWAY) -> {
+            hasKey(lineContent, Keys.ONEWAY) -> {
+                if (!lineCtx.forward) lineCtx.header = true
                 lineCtx.oneWay = true
             }
         }
@@ -100,15 +101,18 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
 
     private fun processLine(prefix: String, line: String, trimmedLine: String, lineContent: String, lineCtx: LineCtx) {
         when {
-            hasKey(lineContent, Keys.PRINT) && lineCtx.forward -> lineCtx.newLines.add(
-                "$prefix ${
-                    replacement(
-                        lineContent,
-                        Keys.RENAME,
-                        lineCtx.map
-                    )
-                }"
-            )
+            hasKey(lineContent, Keys.PRINT) && lineCtx.forward ->{
+                lineCtx.newLines.add(
+                    "$prefix ${
+                        replacement(
+                            lineContent,
+                            Keys.RENAME,
+                            lineCtx.map
+                        )
+                    }"
+                )
+                return
+            }
 
             hasKey(lineContent, Keys.ELSE_IF) -> {
                 lineCtx.inBlock = if (lineCtx.inIfBlock) !lineCtx.inBlock && interpret(
@@ -135,7 +139,7 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
                 return
             }
         }
-        if (!lineCtx.oneWay) lineCtx.newLines.add(line)
+        if (!lineCtx.oneWay || hasKey(lineContent, Keys.ONEWAY)) lineCtx.newLines.add(line)
     }
 
     private fun copy(
