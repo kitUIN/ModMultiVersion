@@ -139,7 +139,7 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
                 return
             }
         }
-        if (!lineCtx.oneWay || hasKey(lineContent, Keys.ONEWAY)) lineCtx.newLines.add(line)
+        if (!lineCtx.oneWay) lineCtx.newLines.add(line)
     }
 
 
