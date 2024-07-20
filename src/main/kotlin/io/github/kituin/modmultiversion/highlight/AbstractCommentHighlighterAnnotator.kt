@@ -16,9 +16,14 @@ abstract class AbstractCommentHighlighterAnnotator : Annotator {
         if (isCommentHighlightingElement(element)) {
             val comment = extractCommentTextFromElement(element)
             val startOffset = element.textRange.startOffset
-
-            val highlights = commentHighlighter.getHighlights(comment, startOffset, element.containingFile.virtualFile.path,holder)
-
+            val filePath = element.containingFile.virtualFile.path
+            val basePath = element.project.basePath
+            val highlights = commentHighlighter.getHighlights(
+                comment, startOffset,
+                filePath,
+                filePath.removePrefix("$basePath/"),
+                holder
+            )
             for (highlight in highlights) {
                 highlight.create()
             }

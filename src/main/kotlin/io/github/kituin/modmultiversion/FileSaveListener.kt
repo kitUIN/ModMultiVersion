@@ -14,6 +14,7 @@ import io.github.kituin.modmultiversion.LineHelper.Companion.replacement
 import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.*
+import com.intellij.openapi.diagnostic.Logger
 
 class LineCtx(
     var targetFile: File,
@@ -35,7 +36,7 @@ class LineCtx(
 
 class FileSaveListener(private val project: Project?) : BulkFileListener {
     private var projectPath = project?.basePath
-
+    private val logger = Logger.getInstance(FileSaveListener::class.java)
     private fun copyFile(
         sourceFile: File, moduleContentRoot: VirtualFile, targetFileName: String, loader: String?
     ) {
@@ -129,9 +130,8 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
                 lineCtx.inIfBlock = true
             }
 
-            hasKey(lineContent, Keys.ELSE) && lineCtx.inIfBlock && !lineCtx.used -> {
-                lineCtx.inBlock = !lineCtx.inBlock
-            }
+            hasKey(lineContent, Keys.ELSE) && lineCtx.inIfBlock ->
+                lineCtx.inBlock = !lineCtx.used && !lineCtx.inBlock
 
             hasKey(lineContent, Keys.END_IF) -> lineCtx.clean()
             lineCtx.inBlock -> {
@@ -161,15 +161,16 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
         forward: Boolean = true
     ) {
         val lines = sourceFile.readLines()
-        val map = createMap(folderName, targetFilePath, loader)
+        val map = createMap(folderName, if (forward) targetFilePath else sourceFile.toPath(), loader)
         val targetFile = targetFilePath.toFile()
         // 反向时检测是否是ONEWAY
         if (!forward && checkTargetOneWay(targetFile)) return
         val lineCtx = LineCtx(targetFile, map, forward)
+        var prefix: String? = null
         for (i in lines.indices) {
             val line = lines[i]
             val trimmedLine = line.trimStart()
-            val prefix = isComment(trimmedLine)
+            if (prefix == null) prefix = isComment(trimmedLine)
             prefix?.let {
                 val lineContent = trimmedLine.removePrefix(it).trimStart()
                 if (i <= 3) {

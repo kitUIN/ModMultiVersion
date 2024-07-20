@@ -59,6 +59,7 @@ class CommentHighlighter {
         text: String,
         startOffset: Int,
         filePath: String,
+        projectFilePath: String,
         holder: AnnotationHolder
     ): List<AnnotationBuilder> {
         val highlightAnnotationData = mutableListOf<AnnotationBuilder>()
@@ -67,7 +68,6 @@ class CommentHighlighter {
         var firstIndex = text.substring(commentStart.length).indexOfFirst { it != ' ' }.takeIf { it >= 0 } ?: 0
         firstIndex += commentStart.length
         val body = text.substring(firstIndex)
-        println(body)
         val mark = MARKS.getOrDefault(filePath, false)
         val key: Keys? = Keys.entries.firstOrNull { body.startsWith(it.value) }
         if (key == null && mark || key != null) highlightAnnotationData.add(
