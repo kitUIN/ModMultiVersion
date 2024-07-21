@@ -14,7 +14,7 @@ import io.github.kituin.modmultiversion.LineHelper.Companion.replacement
 import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.*
-import com.intellij.openapi.diagnostic.Logger
+//import com.intellij.openapi.diagnostic.Logger
 
 class LineCtx(
     var targetFile: File,
@@ -36,7 +36,7 @@ class LineCtx(
 
 class FileSaveListener(private val project: Project?) : BulkFileListener {
     private var projectPath = project?.basePath
-    private val logger = Logger.getInstance(FileSaveListener::class.java)
+    // private val logger = Logger.getInstance(FileSaveListener::class.java)
     private fun copyFile(
         sourceFile: File, moduleContentRoot: VirtualFile, targetFileName: String, loader: String?
     ) {
@@ -139,7 +139,7 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
                 return
             }
         }
-        if (!lineCtx.oneWay) lineCtx.newLines.add(line)
+        if (!trimmedLine.startsWith(prefix)||!lineCtx.oneWay) lineCtx.newLines.add(line)
     }
 
 
