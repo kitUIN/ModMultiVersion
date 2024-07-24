@@ -14,6 +14,7 @@ import io.github.kituin.modmultiversion.LineHelper.Companion.replacement
 import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.*
+
 //import com.intellij.openapi.diagnostic.Logger
 
 class LineCtx(
@@ -36,12 +37,15 @@ class LineCtx(
 
 class FileSaveListener(private val project: Project?) : BulkFileListener {
     private var projectPath = project?.basePath
+
     // private val logger = Logger.getInstance(FileSaveListener::class.java)
     private fun copyFile(
         sourceFile: File, moduleContentRoot: VirtualFile, targetFileName: String, loader: String?
     ) {
         Loaders.entries.forEach { loaderF ->
-            if (loader != null && loader != loaderF.value) return@forEach
+            if ((loader == null && moduleContentRoot.findFile("${loaderF.value}/origin/$targetFileName") != null) ||
+                (loader != null && loader != loaderF.value)
+            ) return@forEach
             moduleContentRoot.findDirectory(loaderF.value)?.children?.forEach { loaderFile ->
                 if (loaderFile.isDirectory && loaderFile.name.startsWith(loaderF.value)) {
                     copy(
@@ -50,6 +54,7 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
                     )
                 }
             }
+
         }
     }
 
@@ -139,7 +144,7 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
                 return
             }
         }
-        if (!trimmedLine.startsWith(prefix)||!lineCtx.oneWay) lineCtx.newLines.add(line)
+        if (!trimmedLine.startsWith(prefix) || !lineCtx.oneWay) lineCtx.newLines.add(line)
     }
 
 
@@ -186,7 +191,7 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
     private fun processFile(relativePath: String, sourceFile: File, moduleContentRoot: VirtualFile) {
         val targetFileName = relativePath.substringAfter("origin/", relativePath)
         val loader = Loaders.entries.firstOrNull { relativePath.startsWith(it.value) }?.value
-        if (relativePath.startsWith("${loader}/origin/")) {
+        if (relativePath.startsWith("${loader}/origin/") || relativePath.startsWith("origin/")) {
             copyFile(sourceFile, moduleContentRoot, targetFileName, loader)
         } else {
             // 反向更新
