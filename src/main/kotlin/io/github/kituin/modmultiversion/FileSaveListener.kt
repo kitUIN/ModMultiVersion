@@ -185,7 +185,15 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
                 processLine(prefix, line, trimmedLine, lineContent, lineCtx)
             } ?: lineCtx.newLines.add(line)
         }
+        checkDirectory(lineCtx)
         lineCtx.targetFile.writeText(lineCtx.newLines.joinToString("\n"))
+    }
+
+    private fun checkDirectory(lineCtx: LineCtx) {
+        if (!lineCtx.targetFile.exists()) {
+            lineCtx.targetFile.parentFile.mkdirs()
+            lineCtx.targetFile.createNewFile()
+        }
     }
 
     private fun processFile(relativePath: String, sourceFile: File, moduleContentRoot: VirtualFile) {
