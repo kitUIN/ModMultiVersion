@@ -41,7 +41,7 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
         sourceFile: File, moduleContentRoot: VirtualFile, targetFileName: String, loader: String?
     ) {
         Loaders.entries.forEach { loaderF ->
-            if (loader != null && loader != loaderF.value) return
+            if (loader != null && loader != loaderF.value) return@forEach
             moduleContentRoot.findDirectory(loaderF.value)?.children?.forEach { loaderFile ->
                 if (loaderFile.isDirectory && loaderFile.name.startsWith(loaderF.value)) {
                     copy(
