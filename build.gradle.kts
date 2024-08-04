@@ -10,6 +10,7 @@ val shadowImplementation by configurations.creating
 configurations["compileOnly"].extendsFrom(shadowImplementation)
 configurations["testImplementation"].extendsFrom(shadowImplementation)
 val interpreterVersion: String by project
+val toolVersion: String by project
 group = "io.github.kituin"
 version = project.version
 
@@ -34,6 +35,7 @@ dependencies {
 
     }
     implementation("io.github.kituin:ModMultiVersionInterpreter:${interpreterVersion}")
+    implementation("io.github.kituin:ModMultiVersionTool:${toolVersion}")
 }
 
 tasks {
