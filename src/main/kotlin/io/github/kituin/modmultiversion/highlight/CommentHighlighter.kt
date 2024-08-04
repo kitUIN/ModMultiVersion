@@ -81,13 +81,46 @@ class CommentHighlighter {
         } else if (key == Keys.END_IF) {
             MARKS[filePath] = false
         }
+        addData(text, firstIndex, startOffset, holder, highlightAnnotationData)
+        return highlightAnnotationData
+    }
+
+    private fun addData(
+        text: String,
+        firstIndex: Int,
+        startOffset: Int,
+        holder: AnnotationHolder,
+        highlightAnnotationData: MutableList<AnnotationBuilder>
+    ) {
         try {
             val parser = Parser(Lexer(text.substring(firstIndex)))
-            parser.tokenList.forEach {
-                if (it.startPos >= 0) highlightAnnotationData.add(
-                    parseAdd(startOffset + firstIndex + it.startPos, it, holder)
-                )
+            for (k in 0 until parser.tokenList.size) {
+                val it = parser.tokenList[k]
+                if (it.startPos < 0) continue
+                var pa = parseAdd(startOffset + firstIndex + it.startPos, it, holder)
+
+                if (it.type == TokenType.STRING) {
+                    pa = tooltipString(it, pa, k, parser)
+                } else if (
+                    it.type == TokenType.GREATER ||
+                    it.type == TokenType.LESS ||
+                    it.type == TokenType.LESS_EQUAL ||
+                    it.type == TokenType.GREATER_EQUAL||
+                    it.type == TokenType.ALSO_EQUAL ||
+                    it.type == TokenType.NOT_EQUAL
+                    ) {
+                    if (k >= 1 && k < parser.tokenList.size - 2 &&
+                        parser.tokenList[k - 1].startPos == -1 &&
+                        parser.tokenList[k - 1].value == "$$" &&
+                        parser.tokenList[k + 1].startPos != -1 &&
+                        parser.tokenList[k + 1].type == TokenType.STRING
+                        ) {
+                        pa = pa.tooltip("$$ ${it.value} ${parser.tokenList[k + 1].value}的简写")
+                    }
+                }
+                highlightAnnotationData.add(pa)
             }
+
             parser.parse()
         } catch (e: ParseException) {
             if (e.token.type != TokenType.EOF) {
@@ -101,7 +134,14 @@ class CommentHighlighter {
                 )
             }
         }
-        return highlightAnnotationData
+    }
+
+    private fun tooltipString(it: Token, pa: AnnotationBuilder, k: Int, parser: Parser): AnnotationBuilder {
+        if (it.value.startsWith("$")) return pa
+        else if (k >= 2 && parser.tokenList[k - 2].startPos == -1 && parser.tokenList[k - 2].value == "$$") {
+            return pa.tooltip("$$ ${parser.tokenList[k - 1].value} ${it.value}的简写")
+        }
+        return pa
     }
 
 
