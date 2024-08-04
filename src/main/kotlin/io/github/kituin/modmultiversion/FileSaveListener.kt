@@ -1,5 +1,7 @@
 package io.github.kituin.modmultiversion
 
+import com.google.common.util.concurrent.ServiceManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
@@ -219,6 +221,7 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
 
     override fun after(events: List<VFileEvent>) {
         if (project == null) return
+        val loadersPluginState = project.service<LoadersPluginState>()
         events.forEach { event ->
             val file = event.file ?: return
             projectPath = project.basePath ?: return
