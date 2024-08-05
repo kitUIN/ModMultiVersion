@@ -20,6 +20,7 @@
 
 <!-- TOC -->
 * [ModMultiVersion](#modmultiversion)
+  * [使用该插件开发模组](#使用该插件开发模组)
   * [项目结构规范](#项目结构规范)
   * [语法规范](#语法规范)
     * [关键字](#关键字)
@@ -36,6 +37,14 @@
   * [重命名文件](#重命名文件)
   * [自定义加载器](#自定义加载器)
 <!-- TOC -->
+
+## 使用该插件开发模组
+
+[简易教程](https://www.kituin.fun/text/minecraft/multi/02/)
+
+使用该插件开发的模组
+- [ChatImage](https://github.com/kitUIN/ChatImage)
+
 
 ## 项目结构规范
 

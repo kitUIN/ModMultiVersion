@@ -34,7 +34,6 @@ dependencies {
         instrumentationTools()
 
     }
-    implementation("io.github.kituin:ModMultiVersionInterpreter:${interpreterVersion}")
     implementation("io.github.kituin:ModMultiVersionTool:${toolVersion}")
 }
 
