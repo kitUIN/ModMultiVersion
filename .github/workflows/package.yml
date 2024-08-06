@@ -11,10 +11,8 @@ jobs:
     steps:
       - name: Checkout source
         uses: actions/checkout@v2
-      - name: Get version
-        shell: pwsh
-        run: |
-          echo "${{ github.ref }}"
+      - name: Get Tag Name
+        run: echo "Tag name is ${GITHUB_REF#refs/tags/}"
       - name: Chose JDK 21
         uses: actions/setup-java@v4
         with:
@@ -26,14 +24,14 @@ jobs:
       - name: Jetbrains Upload
         shell: cmd
         run: |
-          curl -i --header "Authorization: Bearer ${{ secrets.jetbrainsToken }}" -F pluginId=24872 -F file=@build/distributions/ModMultiVersion-${{ github.ref }}.zip https://plugins.jetbrains.com/plugin/uploadPlugin
+          curl -i --header "Authorization: Bearer ${{ secrets.jetbrainsToken }}" -F pluginId=24872 -F file=@build/distributions/ModMultiVersion-${GITHUB_REF#refs/tags/}.zip https://plugins.jetbrains.com/plugin/uploadPlugin
 
       - name: Create GitHub release
         uses: marvinpinto/action-automatic-releases@latest
         with:
           repo_token: "${{ secrets.TOKEN }}"
-          automatic_release_tag: ${{ github.ref }}
-          title: ${{ github.ref }}
+          automatic_release_tag: ${GITHUB_REF#refs/tags/}
+          title: ${GITHUB_REF#refs/tags/}
           prerelease: false
           files: |
             build/distributions/*
