@@ -1,15 +1,8 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 plugins {
     id("java")
     id("org.jetbrains.kotlin.jvm") version "1.9.24"
     id("org.jetbrains.intellij.platform") version "2.0.0-beta9"
-    id("com.github.johnrengelman.shadow") version "7.0.0"
 }
-
-val shadowImplementation by configurations.creating
-configurations["compileOnly"].extendsFrom(shadowImplementation)
-configurations["testImplementation"].extendsFrom(shadowImplementation)
-val interpreterVersion: String by project
 val toolVersion: String by project
 group = "io.github.kituin"
 version = project.version
@@ -61,24 +54,3 @@ tasks {
         token.set(System.getenv("PUBLISH_TOKEN"))
     }
 }
-val shadowJarTask = tasks.named<ShadowJar>("shadowJar") {
-    // dependsOn(tasks.named("prepareTestSandbox"))
-    dependencies {
-        include(dependency("io.github.kituin:ModMultiVersionInterpreter:${interpreterVersion}"))
-    }
-    // automatically remove all classes of dependencies that are not used by the project
-    minimize()
-    // remove default "-all" suffix to make shadow jar look like original one.
-    archiveClassifier.set("")
-    // use only the dependencies from the shadowImplementation configuration
-    configurations = listOf(shadowImplementation)
-}
-configurations {
-    artifacts {
-        runtimeElements(shadowJarTask)
-        apiElements(shadowJarTask)
-    }
-}
-//tasks.named("build") {
-//    dependsOn(shadowJarTask)
-//}

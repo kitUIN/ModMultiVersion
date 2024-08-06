@@ -1,0 +1,33 @@
+name: Package
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "*.*" # Push events to matching v*, i.e. v1.0, v20.15.10
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v2
+
+      - name: Chose JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+      - name: Build
+        run: |
+          ./gradlew clean build
+
+      - name: Create GitHub release
+        uses: marvinpinto/action-automatic-releases@latest
+        with:
+          repo_token: "${{ secrets.TOKEN }}"
+          automatic_release_tag: ${{ github.ref }}
+          title: ${{ github.ref }}
+          prerelease: false
+          files: |
+            build/distributions/*

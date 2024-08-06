@@ -7,14 +7,10 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.colors.TextAttributesKey.createTextAttributesKey
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.TextRange
-import io.github.kituin.modmultiversion.Keys
-import io.github.kituin.modmultiversion.LineHelper
+import io.github.kituin.modmultiversiontool.Keys
+import io.github.kituin.modmultiversiontool.LineHelper
 import io.github.kituin.modmultiversioninterpreter.*
-
-class CommentCtx(var inBlock: Boolean = false, var inIfBlock: Boolean = false)
-
 
 @Service
 class CommentHighlighter {
