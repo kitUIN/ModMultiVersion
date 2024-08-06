@@ -25,6 +25,9 @@ jobs:
       - name: Build
         run: |
           ./gradlew clean build
+      - name: Jetbrains Upload
+        run: |
+          curl -i --header "Authorization: Bearer ${{ secrets.jetbrainsToken }}" -F pluginId=24872 -F file=@./build/distributions/ModMultiVersion-${{ steps.get_version.outputs.VERSION }}.zip https://plugins.jetbrains.com/plugin/uploadPlugin
 
       - name: Create GitHub release
         uses: marvinpinto/action-automatic-releases@latest
