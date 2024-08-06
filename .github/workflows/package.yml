@@ -13,6 +13,7 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v2
       - name: Get version
+        shell: pwsh
         run: |
           echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
           echo ${{ steps.get_version.outputs.VERSION }}
