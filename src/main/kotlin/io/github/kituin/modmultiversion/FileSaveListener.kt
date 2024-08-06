@@ -7,6 +7,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findDirectory
 import com.intellij.openapi.vfs.findFile
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import java.io.File
 import kotlin.io.path.*
@@ -64,20 +66,32 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
             fileHelper.copy(sourceFile, forwardPath, folder, loader!!, false)
         }
     }
+    override fun before(events: List<VFileEvent>) {
+        for (event in events) {
+            if (event is VFileCreateEvent) {
+                // 处理新建文件事件
+                println("File created: ${event.path}")
+            }
+        }
+    }
+
 
     override fun after(events: List<VFileEvent>) {
         if (project == null) return
         val loaders = project.getService(LoadersPluginState::class.java).loaders
-        events.forEach { event ->
-            val file = event.file ?: return
-            val projectPath = project.basePath ?: return
-            val fileHelper = FileHelper(projectPath)
-            if (!file.isDirectory && file.path.startsWith(projectPath)) {
-                val moduleContentRoot =
-                    ProjectRootManager.getInstance(project).fileIndex.getContentRootForFile(file) ?: return
-                val relativePath = file.path.removePrefix("$projectPath/")
-                val sourceFile = File(file.path)
-                processFile(relativePath, sourceFile, loaders, moduleContentRoot, fileHelper)
+        for (event in events) {
+            if (event is VFileContentChangeEvent) {
+                println("File saved: ${event.path}")
+                val file = event.file ?: return
+                val projectPath = project.basePath ?: return
+                val fileHelper = FileHelper(projectPath)
+                if (!file.isDirectory && file.path.startsWith(projectPath)) {
+                    val moduleContentRoot =
+                        ProjectRootManager.getInstance(project).fileIndex.getContentRootForFile(file) ?: return
+                    val relativePath = file.path.removePrefix("$projectPath/")
+                    val sourceFile = File(file.path)
+                    processFile(relativePath, sourceFile, loaders, moduleContentRoot, fileHelper)
+                }
             }
         }
     }
