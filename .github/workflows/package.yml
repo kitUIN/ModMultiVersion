@@ -1,7 +1,6 @@
 name: Package
 
 on:
-  workflow_dispatch:
   push:
     tags:
       - "*.*" # Push events to matching v*, i.e. v1.0, v20.15.10
@@ -15,8 +14,7 @@ jobs:
       - name: Get version
         shell: pwsh
         run: |
-          echo "::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}"
-          echo "${GITHUB_REF/refs\/tags\//}"
+          echo "${{ github.ref }}"
       - name: Chose JDK 21
         uses: actions/setup-java@v4
         with:
@@ -28,14 +26,14 @@ jobs:
       - name: Jetbrains Upload
         shell: cmd
         run: |
-          curl -i --header "Authorization: Bearer ${{ secrets.jetbrainsToken }}" -F pluginId=24872 -F file=@build/distributions/ModMultiVersion-${{ steps.get_version.outputs.VERSION }}.zip https://plugins.jetbrains.com/plugin/uploadPlugin
+          curl -i --header "Authorization: Bearer ${{ secrets.jetbrainsToken }}" -F pluginId=24872 -F file=@build/distributions/ModMultiVersion-${{ github.ref }}.zip https://plugins.jetbrains.com/plugin/uploadPlugin
 
       - name: Create GitHub release
         uses: marvinpinto/action-automatic-releases@latest
         with:
           repo_token: "${{ secrets.TOKEN }}"
-          automatic_release_tag: ${{ steps.get_version.outputs.VERSION }}
-          title: ${{ steps.get_version.outputs.VERSION }}
+          automatic_release_tag: ${{ github.ref }}
+          title: ${{ github.ref }}
           prerelease: false
           files: |
             build/distributions/*
