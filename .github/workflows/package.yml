@@ -16,7 +16,7 @@ jobs:
         shell: pwsh
         run: |
           echo "::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}"
-          echo "${{ steps.get_version.outputs.VERSION }}"
+          echo "${GITHUB_REF/refs\/tags\//}"
       - name: Chose JDK 21
         uses: actions/setup-java@v4
         with:
