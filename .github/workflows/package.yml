@@ -12,7 +12,10 @@ jobs:
     steps:
       - name: Checkout source
         uses: actions/checkout@v2
-
+      - name: Get version
+        run: |
+          echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+          echo ${{ steps.get_version.outputs.VERSION }}
       - name: Chose JDK 21
         uses: actions/setup-java@v4
         with:
@@ -26,8 +29,8 @@ jobs:
         uses: marvinpinto/action-automatic-releases@latest
         with:
           repo_token: "${{ secrets.TOKEN }}"
-          automatic_release_tag: ${{ github.ref }}
-          title: ${{ github.ref }}
+          automatic_release_tag: ${{ steps.get_version.outputs.VERSION }}
+          title: ${{ steps.get_version.outputs.VERSION }}
           prerelease: false
           files: |
             build/distributions/*
