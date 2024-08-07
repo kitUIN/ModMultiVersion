@@ -22,14 +22,15 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
         targetFileName: String,
         loader: String?,
         loaders: List<String>,
-        fileHelper: FileHelper
+        fileHelper: FileHelper,
+        ignore: List<String> = mutableListOf()
     ) {
         loaders.forEach { loaderF ->
             if ((loader == null && moduleContentRoot.findFile("${loaderF}/origin/$targetFileName") != null) ||
                 (loader != null && loader != loaderF)
             ) return@forEach
             moduleContentRoot.findDirectory(loaderF)?.children?.forEach { loaderFile ->
-                if (loaderFile.isDirectory && loaderFile.name.startsWith(loaderF)) {
+                if (loaderFile.isDirectory && loaderFile.name.startsWith(loaderF) && !ignore.contains(loaderFile.name)) {
                     fileHelper.copy(
                         sourceFile, Path("${loaderFile.path}/$targetFileName"),
                         loaderFile.name, loaderF, true
@@ -56,7 +57,7 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
             val sourcePath = Path(relativePath)
             if (sourcePath.nameCount < 3) return
             val folder = sourcePath.getName(1).name
-            val subPath = sourcePath.subpath(2, sourcePath.nameCount).pathString
+            val subPath = sourcePath.subpath(2, sourcePath.nameCount).invariantSeparatorsPathString
             val forwardPathName = "${fileHelper.projectPath}/$loader/origin/$subPath"
             var forwardPath = Path(forwardPathName)
             if (moduleContentRoot.findFile(forwardPathName) == null) {
@@ -64,8 +65,13 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
                 if (!forwardPath.exists()) return
             }
             fileHelper.copy(sourceFile, forwardPath, folder, loader!!, false)
+            copyFile(forwardPath.toFile(), moduleContentRoot, subPath,
+                loaders.firstOrNull {
+                    forwardPath.invariantSeparatorsPathString.removePrefix("${fileHelper.projectPath}/").startsWith(it)
+                }, loaders, fileHelper, mutableListOf(folder))
         }
     }
+
     override fun before(events: List<VFileEvent>) {
         for (event in events) {
             if (event is VFileCreateEvent) {
