@@ -1,9 +1,11 @@
 package io.github.kituin.modmultiversion
 
+import com.intellij.openapi.fileEditor.FileEditorManager
 import io.github.kituin.modmultiversiontool.FileHelper
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.findDirectory
 import com.intellij.openapi.vfs.findFile
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
@@ -69,9 +71,17 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
                 loaders.firstOrNull {
                     forwardPath.invariantSeparatorsPathString.removePrefix("${fileHelper.projectPath}/").startsWith(it)
                 }, loaders, fileHelper, mutableListOf(folder))
+
+        }
+        refresh()
+    }
+    private fun refresh(){
+        if (project == null) return
+        val fileEditorManager = FileEditorManager.getInstance(project)
+        fileEditorManager.selectedFiles.forEach {
+            it?.refresh(false, false) { println("Refreshed: ${it.path}") }
         }
     }
-
     override fun before(events: List<VFileEvent>) {
         for (event in events) {
             if (event is VFileCreateEvent) {
