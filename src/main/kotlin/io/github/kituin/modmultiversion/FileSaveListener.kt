@@ -1,5 +1,6 @@
 package io.github.kituin.modmultiversion
 
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import io.github.kituin.modmultiversiontool.FileHelper
 import com.intellij.openapi.project.Project
@@ -27,6 +28,7 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
         fileHelper: FileHelper,
         ignore: List<String> = mutableListOf()
     ) {
+        val manager = FileDocumentManager.getInstance();
         loaders.forEach { loaderF ->
             if ((loader == null && moduleContentRoot.findFile("${loaderF}/origin/$targetFileName") != null) ||
                 (loader != null && loader != loaderF)
@@ -37,6 +39,9 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
                         sourceFile, Path("${loaderFile.path}/$targetFileName"),
                         loaderFile.name, loaderF, true
                     )
+                    moduleContentRoot.findFile("${loaderFile.path}/$targetFileName")?.let {
+                        manager.reloadFromDisk(manager.getDocument(it)!!)
+                    }
                 }
             }
 
@@ -73,15 +78,8 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
                 }, loaders, fileHelper, mutableListOf(folder))
 
         }
-        refresh()
     }
-    private fun refresh(){
-        if (project == null) return
-        val fileEditorManager = FileEditorManager.getInstance(project)
-        fileEditorManager.selectedFiles.forEach {
-            it?.refresh(false, false) { println("Refreshed: ${it.path}") }
-        }
-    }
+
     override fun before(events: List<VFileEvent>) {
         for (event in events) {
             if (event is VFileCreateEvent) {
