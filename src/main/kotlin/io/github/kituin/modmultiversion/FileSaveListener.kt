@@ -1,12 +1,11 @@
 package io.github.kituin.modmultiversion
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.fileEditor.FileEditorManager
 import io.github.kituin.modmultiversiontool.FileHelper
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.findDirectory
 import com.intellij.openapi.vfs.findFile
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
@@ -19,6 +18,7 @@ import kotlin.io.path.*
 
 class FileSaveListener(private val project: Project?) : BulkFileListener {
 
+    private val logger = Logger.getInstance(FileSaveListener::class.java)
     private fun copyFile(
         sourceFile: File,
         moduleContentRoot: VirtualFile,
@@ -28,19 +28,21 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
         fileHelper: FileHelper,
         ignore: List<String> = mutableListOf()
     ) {
-        val manager = FileDocumentManager.getInstance();
+        val manager = FileDocumentManager.getInstance()
         loaders.forEach { loaderF ->
             if ((loader == null && moduleContentRoot.findFile("${loaderF}/origin/$targetFileName") != null) ||
                 (loader != null && loader != loaderF)
             ) return@forEach
-            moduleContentRoot.findDirectory(loaderF)?.children?.forEach { loaderFile ->
+            moduleContentRoot.findDirectory("${fileHelper.projectPath}/$loaderF")?.children?.forEach { loaderFile ->
                 if (loaderFile.isDirectory && loaderFile.name.startsWith(loaderF) && !ignore.contains(loaderFile.name)) {
                     fileHelper.copy(
                         sourceFile, Path("${loaderFile.path}/$targetFileName"),
                         loaderFile.name, loaderF, true
                     )
+                    logger.info("File Saved: ${loaderFile.path}/$targetFileName")
                     moduleContentRoot.findFile("${loaderFile.path}/$targetFileName")?.let {
                         manager.reloadFromDisk(manager.getDocument(it)!!)
+                        logger.info("File reloadFromDisk: ${loaderFile.path}/$targetFileName")
                     }
                 }
             }
@@ -55,6 +57,7 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
         moduleContentRoot: VirtualFile,
         fileHelper: FileHelper
     ) {
+        val manager = FileDocumentManager.getInstance()
         val targetFileName = relativePath.substringAfter("origin/", relativePath)
         val loader = loaders.firstOrNull { relativePath.startsWith(it) }
         if (relativePath.startsWith("${loader}/origin/") || relativePath.startsWith("origin/")) {
@@ -72,11 +75,11 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
                 if (!forwardPath.exists()) return
             }
             fileHelper.copy(sourceFile, forwardPath, folder, loader!!, false)
+            logger.info("File Reversed: ${forwardPath.invariantSeparatorsPathString}")
             copyFile(forwardPath.toFile(), moduleContentRoot, subPath,
                 loaders.firstOrNull {
                     forwardPath.invariantSeparatorsPathString.removePrefix("${fileHelper.projectPath}/").startsWith(it)
                 }, loaders, fileHelper, mutableListOf(folder))
-
         }
     }
 
@@ -84,7 +87,7 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
         for (event in events) {
             if (event is VFileCreateEvent) {
                 // 处理新建文件事件
-                println("File created: ${event.path}")
+                logger.info("File created: ${event.path}")
             }
         }
     }
@@ -95,7 +98,6 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
         val loaders = project.getService(LoadersPluginState::class.java).loaders
         for (event in events) {
             if (event is VFileContentChangeEvent) {
-                println("File saved: ${event.path}")
                 val file = event.file ?: return
                 val projectPath = project.basePath ?: return
                 val fileHelper = FileHelper(projectPath)
