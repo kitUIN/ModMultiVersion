@@ -29,6 +29,9 @@
         <additionalTextAttributes scheme="Darcula" file="colorSchemes/highlightTokens.xml"/>
         <annotator language=""
                    implementationClass="io.github.kituin.modmultiversion.highlight.GenericCommentHighlighterAnnotator"/>
+        <toolWindow id="Alias Tool" secondary="true"
+                    icon="AllIcons.General.Modified" anchor="right"
+                    factoryClass="io.github.kituin.modmultiversion.window.AliasToolWindowFactory"/>
     </extensions>
     <actions>
         <action id="io.github.kituin.modmultiversion.addloader" class="io.github.kituin.modmultiversion.action.AddLoader"

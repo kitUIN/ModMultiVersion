@@ -4,7 +4,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.psi.PsiDirectory
-import io.github.kituin.modmultiversion.LoadersPluginState
+import io.github.kituin.modmultiversion.storage.LoadersPluginState
 
 class AddLoader : AnAction("Set A Folder As A Listening Loader") {
     override fun actionPerformed(e: AnActionEvent) {

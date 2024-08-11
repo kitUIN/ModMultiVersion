@@ -12,6 +12,8 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import io.github.kituin.modmultiversion.storage.AliasState
+import io.github.kituin.modmultiversion.storage.LoadersPluginState
 import java.io.File
 import kotlin.io.path.*
 
@@ -37,7 +39,7 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
                 if (loaderFile.isDirectory && loaderFile.name.startsWith(loaderF) && !ignore.contains(loaderFile.name)) {
                     fileHelper.copy(
                         sourceFile, Path("${loaderFile.path}/$targetFileName"),
-                        loaderFile.name, loaderF, true
+                        loaderFile.name, loaderF, project!!.getService(AliasState::class.java).alias, true
                     )
                     logger.info("File Saved: ${loaderFile.path}/$targetFileName")
                     moduleContentRoot.findFile("${loaderFile.path}/$targetFileName")?.let {
@@ -57,7 +59,6 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
         moduleContentRoot: VirtualFile,
         fileHelper: FileHelper
     ) {
-        val manager = FileDocumentManager.getInstance()
         val targetFileName = relativePath.substringAfter("origin/", relativePath)
         val loader = loaders.firstOrNull { relativePath.startsWith(it) }
         if (relativePath.startsWith("${loader}/origin/") || relativePath.startsWith("origin/")) {
@@ -74,12 +75,20 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
                 forwardPath = Path(fileHelper.projectPath, "origin", subPath)
                 if (!forwardPath.exists()) return
             }
-            fileHelper.copy(sourceFile, forwardPath, folder, loader!!, false)
+            fileHelper.copy(
+                sourceFile,
+                forwardPath,
+                folder,
+                loader!!,
+                project!!.getService(AliasState::class.java).alias,
+                false
+            )
             logger.info("File Reversed: ${forwardPath.invariantSeparatorsPathString}")
             copyFile(forwardPath.toFile(), moduleContentRoot, subPath,
                 loaders.firstOrNull {
                     forwardPath.invariantSeparatorsPathString.removePrefix("${fileHelper.projectPath}/").startsWith(it)
-                }, loaders, fileHelper, mutableListOf(folder))
+                }, loaders, fileHelper, mutableListOf(folder)
+            )
         }
     }
 
