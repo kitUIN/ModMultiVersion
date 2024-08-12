@@ -312,3 +312,40 @@
 默认只监听`fabric`,`forge`,`neoforge`,`quilt`文件夹内的更改
 
 如果要添加别的加载器文件夹,请对着文件夹右键选择`将文件夹...设置为监听的加载器`
+
+## 别名替换
+
+`视图`-`工具窗口`-`Alias Tool`
+
+- 如何使用
+  - 右键`root`新建,命名你的变量,例如`Style`,会自动填充为`#Style#`
+  - 右键`Style`新建,设置条件表达式,例如`> forge-1.16.5`,再输入满足条件的内容,可以添加多个
+
+示例:
+```txt
+root                
+├── #Style#               
+│   ├── > forge-1.16.5 
+│   │   └── net.minecraft.network.chat.Style           
+│   └── forge-1.16.5    
+        └── net.minecraft.util.text.Style     
+```
+
+```txt
+// origin文件夹内
+public static #Style# getStyleFromCode(ChatImageCode code) {
+    return #Style#.EMPTY;
+}
+```
+```java
+// > forge-1.16.5 
+public static net.minecraft.network.chat.Style getStyleFromCode(ChatImageCode code) {
+    return net.minecraft.network.chat.Style.EMPTY;
+}
+```
+```java
+// forge-1.16.5 
+public static net.minecraft.util.text.Style getStyleFromCode(ChatImageCode code) {
+    return net.minecraft.util.text.Style.EMPTY;
+}
+```

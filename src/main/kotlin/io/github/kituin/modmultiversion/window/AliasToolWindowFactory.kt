@@ -156,13 +156,14 @@ internal class AliasToolWindowFactory : ToolWindowFactory, DumbAware {
             val service = it.getService(AliasState::class.java)
             val (_, node) = getLevel(e)
             if (node == null) return
-            val parent = if (is_new) node.userObject as String else (node.parent as DefaultMutableTreeNode).userObject as String
+            val parent =
+                if (is_new) node.userObject as String else (node.parent as DefaultMutableTreeNode).userObject as String
             val (beforeKey, beforeValue) = if (!is_new) {
                 node.userObject as String to service.alias[parent]?.get(node.userObject as String)
             } else {
                 null to null
             }
-            val dialog = KeyValueDialog(beforeKey,beforeValue)
+            val dialog = KeyValueDialog(beforeKey, beforeValue)
             if (dialog.showAndGet()) {
                 val key = dialog.model.keyText
                 val value = dialog.model.valueText
@@ -179,7 +180,7 @@ internal class AliasToolWindowFactory : ToolWindowFactory, DumbAware {
                 } else {
                     service.alias[parent]!![key] = value
                 }
-                if (!is_new) service.alias[parent]!!.remove(beforeKey)
+                if (!is_new && beforeKey != key) service.alias[parent]!!.remove(beforeKey)
             }
         }
 

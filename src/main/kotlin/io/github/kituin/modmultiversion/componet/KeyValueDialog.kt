@@ -19,7 +19,7 @@ class KeyValueDialog(key:String?,value:String?) : DialogWrapper(true) {
 
     override fun createCenterPanel(): JComponent {
         val contentPanel = panel {
-            row("Key:") { textField().bindText(model::keyText) }
+            row("Condition:") { textField().bindText(model::keyText) }
             row("Value:") { textField().bindText(model::valueText) }
         }
         return contentPanel
