@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.ui.PopupHandler
+import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.content.ContentFactory
 import com.intellij.ui.treeStructure.Tree
 import io.github.kituin.modmultiversion.componet.KeyDialog
@@ -14,6 +15,7 @@ import io.github.kituin.modmultiversion.componet.KeyValueDialog
 import io.github.kituin.modmultiversion.storage.AliasState
 import java.awt.BorderLayout
 import javax.swing.JPanel
+import javax.swing.JScrollPane
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 
@@ -31,7 +33,7 @@ internal class AliasToolWindowFactory : ToolWindowFactory, DumbAware {
 
         init {
             contentPanel.layout = BorderLayout(0, 20)
-            contentPanel.add(createTree(), BorderLayout.CENTER)
+            contentPanel.add(JBScrollPane(createTree()), BorderLayout.CENTER)
             refreshTree()
         }
 

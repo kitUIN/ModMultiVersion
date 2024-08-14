@@ -15,12 +15,16 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import io.github.kituin.modmultiversion.storage.AliasState
 import io.github.kituin.modmultiversion.storage.LoadersPluginState
 import java.io.File
+import java.util.*
 import kotlin.io.path.*
 
 
 class FileSaveListener(private val project: Project?) : BulkFileListener {
 
     private val logger = Logger.getInstance(FileSaveListener::class.java)
+    private fun getAlias(): SortedMap<String, MutableMap<String, String>> {
+        return project!!.getService(AliasState::class.java).alias.toSortedMap(compareByDescending { it })
+    }
     private fun copyFile(
         sourceFile: File,
         moduleContentRoot: VirtualFile,
@@ -39,7 +43,7 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
                 if (loaderFile.isDirectory && loaderFile.name.startsWith(loaderF) && !ignore.contains(loaderFile.name)) {
                     fileHelper.copy(
                         sourceFile, Path("${loaderFile.path}/$targetFileName"),
-                        loaderFile.name, loaderF, project!!.getService(AliasState::class.java).alias, true
+                        loaderFile.name, loaderF, getAlias(), true
                     )
                     logger.info("File Saved: ${loaderFile.path}/$targetFileName")
                     moduleContentRoot.findFile("${loaderFile.path}/$targetFileName")?.let {
@@ -80,7 +84,7 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
                 forwardPath,
                 folder,
                 loader!!,
-                project!!.getService(AliasState::class.java).alias,
+                getAlias(),
                 false
             )
             logger.info("File Reversed: ${forwardPath.invariantSeparatorsPathString}")
