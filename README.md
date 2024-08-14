@@ -317,8 +317,8 @@
 ## 别名替换
 
 - 要求:
-  - 本插件0.16.0+
-  - [ModMultiVersionTool](https://github.com/kitUIN/ModMultiVersionTool)1.2.0+
+  - 本插件0.16.6+
+  - [ModMultiVersionTool](https://github.com/kitUIN/ModMultiVersionTool)1.2.7+
 
 `视图`-`工具窗口`-`Alias Tool`
 
