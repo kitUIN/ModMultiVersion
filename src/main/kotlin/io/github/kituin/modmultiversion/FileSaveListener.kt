@@ -111,7 +111,7 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
         val loaders = project.getService(LoadersPluginState::class.java).loaders
         for (event in events) {
             if (event is VFileContentChangeEvent) {
-                val file = event.file ?: return
+                val file = event.file
                 val projectPath = project.basePath ?: return
                 val fileHelper = FileHelper(projectPath)
                 if (!file.isDirectory && file.path.startsWith(projectPath)) {

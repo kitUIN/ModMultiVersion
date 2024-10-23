@@ -1,11 +1,13 @@
 package io.github.kituin.modmultiversion.action
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.psi.PsiDirectory
 import io.github.kituin.modmultiversion.storage.LoadersPluginState
 
+@Suppress("ActionPresentationInstantiatedInCtor")
 class AddLoader : AnAction("Set A Folder As A Listening Loader") {
     override fun actionPerformed(e: AnActionEvent) {
         if (e.project == null) return
@@ -29,5 +31,8 @@ class AddLoader : AnAction("Set A Folder As A Listening Loader") {
         } else {
             e.presentation.text = "将文件夹${dir.virtualFile.name}设置为监听的加载器"
         }
+    }
+    override fun getActionUpdateThread(): ActionUpdateThread {
+        return ActionUpdateThread.EDT // 指定在 EDT 中更新
     }
 }

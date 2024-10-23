@@ -19,24 +19,27 @@
 
 
 <!-- TOC -->
+
 * [ModMultiVersion](#modmultiversion)
-  * [使用该插件开发模组](#使用该插件开发模组)
-  * [项目结构规范](#项目结构规范)
-  * [语法规范](#语法规范)
-    * [关键字](#关键字)
-    * [注释符号](#注释符号)
-    * [布尔表达式](#布尔表达式)
-    * [变量](#变量)
-    * [IF-ELSE](#if-else)
-    * [PRINT](#print)
-  * [手动同步](#手动同步)
-  * [双向同步](#双向同步)
-  * [单向同步](#单向同步)
-  * [黑名单](#黑名单)
-  * [白名单](#白名单)
-  * [重命名文件](#重命名文件)
-  * [自定义加载器](#自定义加载器)
-  * [别名替换](#别名替换)
+    * [使用该插件开发模组](#使用该插件开发模组)
+    * [项目结构规范](#项目结构规范)
+    * [语法规范](#语法规范)
+        * [关键字](#关键字)
+        * [注释符号](#注释符号)
+        * [布尔表达式](#布尔表达式)
+        * [变量](#变量)
+        * [IF-ELSE](#if-else)
+        * [PRINT](#print)
+    * [手动同步](#手动同步)
+    * [双向同步](#双向同步)
+    * [单向同步](#单向同步)
+    * [黑名单](#黑名单)
+    * [白名单](#白名单)
+    * [重命名文件](#重命名文件)
+    * [自定义加载器](#自定义加载器)
+    * [别名替换](#别名替换)
+    * [同名快速跳转](#同名快速跳转)
+
 <!-- TOC -->
 
 ## 使用该插件开发模组
@@ -44,8 +47,8 @@
 [简易教程](https://www.kituin.fun/text/minecraft/multi/02/)
 
 使用该插件开发的模组
-- [ChatImage](https://github.com/kitUIN/ChatImage)
 
+- [ChatImage](https://github.com/kitUIN/ChatImage)
 
 ## 项目结构规范
 
@@ -317,16 +320,17 @@
 ## 别名替换
 
 - 要求:
-  - 本插件0.16.6+
-  - [ModMultiVersionTool](https://github.com/kitUIN/ModMultiVersionTool)1.2.7+
+    - 本插件0.16.6+
+    - [ModMultiVersionTool](https://github.com/kitUIN/ModMultiVersionTool)1.2.7+
 
 `视图`-`工具窗口`-`Alias Tool`
 
 - 如何使用
-  - 右键`root`新建,命名你的变量,例如`Style`,会自动填充为`#Style#`
-  - 右键`Style`新建,设置条件表达式,例如`> forge-1.16.5`,再输入满足条件的内容,可以添加多个
+    - 右键`root`新建,命名你的变量,例如`Style`,会自动填充为`#Style#`
+    - 右键`Style`新建,设置条件表达式,例如`> forge-1.16.5`,再输入满足条件的内容,可以添加多个
 
 示例:
+
 ```txt
 root                
 ├── #Style#               
@@ -342,15 +346,26 @@ public static #Style# getStyleFromCode(ChatImageCode code) {
     return #Style#.EMPTY;
 }
 ```
+
 ```java
 // > forge-1.16.5 
 public static net.minecraft.network.chat.Style getStyleFromCode(ChatImageCode code) {
     return net.minecraft.network.chat.Style.EMPTY;
 }
 ```
+
 ```java
 // forge-1.16.5 
 public static net.minecraft.util.text.Style getStyleFromCode(ChatImageCode code) {
     return net.minecraft.util.text.Style.EMPTY;
 }
 ```
+
+## 同名快速跳转
+
+- 要求:
+    - 本插件0.18.0+
+
+![img.png](img/same_file.png)
+
+对着文件右键或者在编辑器内右键
