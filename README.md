@@ -327,6 +327,7 @@
     - 本插件0.16.6+
     - [ModMultiVersionTool](https://github.com/kitUIN/ModMultiVersionTool)1.2.7+
     - 如果使用`git`,需要上传`.idea/ModAliasState.xml`
+ 
 `视图`-`工具窗口`-`Alias Tool`
 
 - 如何使用
