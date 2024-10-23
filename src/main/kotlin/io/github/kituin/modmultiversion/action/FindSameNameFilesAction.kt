@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.ui.popup.JBPopupFactory.ActionSelectionAid
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findDirectory
 import com.intellij.openapi.vfs.findFile
@@ -32,7 +33,7 @@ class FindSameNameFilesAction : AnAction("同名文件") {
         val searchFile = subPath.subpath(2, subPath.count()).pathString
         // 查找同名文件
         val sameNameFiles = mutableMapOf<String, VirtualFile>()
-        val baseDir = project.baseDir
+        val baseDir = LocalFileSystem.getInstance().findFileByPath(project.basePath!!)
         baseDir?.findDirectory(searchPath)?.children?.forEach { file ->
             val navigateFile = file.findFile(searchFile)
             if (navigateFile != null && file.name != currentDir) {

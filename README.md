@@ -19,49 +19,51 @@
 
 
 <!-- TOC -->
-
 * [ModMultiVersion](#modmultiversion)
-    * [使用该插件开发模组](#使用该插件开发模组)
-    * [项目结构规范](#项目结构规范)
-    * [语法规范](#语法规范)
-        * [关键字](#关键字)
-        * [注释符号](#注释符号)
-        * [布尔表达式](#布尔表达式)
-        * [变量](#变量)
-        * [IF-ELSE](#if-else)
-        * [PRINT](#print)
-    * [手动同步](#手动同步)
-    * [双向同步](#双向同步)
-    * [单向同步](#单向同步)
-    * [黑名单](#黑名单)
-    * [白名单](#白名单)
-    * [重命名文件](#重命名文件)
-    * [自定义加载器](#自定义加载器)
-    * [别名替换](#别名替换)
-    * [同名快速跳转](#同名快速跳转)
-
+  * [使用该插件开发模组](#使用该插件开发模组)
+  * [项目结构规范](#项目结构规范)
+  * [语法规范](#语法规范)
+    * [关键字](#关键字)
+    * [注释符号](#注释符号)
+    * [布尔表达式](#布尔表达式)
+    * [变量](#变量)
+    * [IF-ELSE](#if-else)
+    * [PRINT](#print)
+  * [手动同步](#手动同步)
+  * [双向同步](#双向同步)
+  * [单向同步](#单向同步)
+  * [黑名单](#黑名单)
+  * [白名单](#白名单)
+  * [重命名文件](#重命名文件)
+  * [自定义加载器](#自定义加载器)
+  * [别名替换](#别名替换)
+  * [简化仓库代码(使用构建工具)](#简化仓库代码使用构建工具)
+  * [同名快速跳转](#同名快速跳转)
 <!-- TOC -->
 
 ## 使用该插件开发模组
 
 [简易教程](https://www.kituin.fun/text/minecraft/multi/02/)
 
-使用该插件开发的模组
+使用该插件开发的模组/插件
 
 - [ChatImage](https://github.com/kitUIN/ChatImage)
+- [QueQiao](https://github.com/17TheWord/QueQiao)
 
 ## 项目结构规范
 
 ```
-📦 ChatImage                # 项目名称
-├── 📂 origin               # 全局级 用于同步
-├── 📂 forge                # 加载器文件夹
-│   ├── 📂 forge-1.20.1     # 1.20.1forge (加载器版本文件夹)
-│   ├── 📂 ...              # 别的版本
-│   └── 📂 origin           # 加载器级 用于同步
-├── 📂 fabric               # 加载器文件夹
-├── 📂 ...                  # 别的加载器
-└── 📜 ...                  # 其他文件
+📦 ChatImage                         # 项目名称
+├── 📂 origin                        # 全局级 用于同步
+├── 📂 forge                         # 加载器文件夹
+│   ├── 📂 forge-1.20.1              # 1.20.1forge (加载器版本文件夹)
+│   ├── 📂 ...                       # 别的版本
+│   └── 📂 origin                    # 加载器级 用于同步
+├── 📂 fabric                        # 加载器文件夹
+├── 📂 ...                           # 别的加载器
+├── 📂 tool                          # 工具文件夹(可选)
+│   └── 🔧 ModMultiVersionTool.jar   # 构建工具(命令行版)
+└── 📜 ...                           # 其他文件
 ```
 
 用于同步的文件夹:
@@ -360,6 +362,17 @@ public static net.minecraft.util.text.Style getStyleFromCode(ChatImageCode code)
     return net.minecraft.util.text.Style.EMPTY;
 }
 ```
+
+## 简化仓库代码(使用构建工具)
+
+> 该段为可选,非强制使用
+
+在开发完成后,你会发现各个版本的文件都是由origin中文件生成,所以你可以使用构建工具来简化仓库代码
+
+1. 删除所有由origin中文件复制的文件
+2. 下载构建工具[ModMultiVersionTool.jar](https://github.com/kitUIN/ModMultiVersionTool/releases)
+3. 项目在开发前先进行复制同步,可参考[tool](https://github.com/kitUIN/ChatImage/tree/master/tool)
+   与 [init.ps1](https://github.com/kitUIN/ChatImage/blob/master/init.ps1)
 
 ## 同名快速跳转
 
