@@ -319,12 +319,14 @@
 
 如果要添加别的加载器文件夹,请对着文件夹右键选择`将文件夹...设置为监听的加载器`
 
+- 如果使用`git`,需要上传`.idea/ModMultiLoaders.xml`
+  
 ## 别名替换
 
 - 要求:
     - 本插件0.16.6+
     - [ModMultiVersionTool](https://github.com/kitUIN/ModMultiVersionTool)1.2.7+
-
+    - 如果使用`git`,需要上传`.idea/ModAliasState.xml`
 `视图`-`工具窗口`-`Alias Tool`
 
 - 如何使用
