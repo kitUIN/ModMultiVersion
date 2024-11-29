@@ -27,5 +27,3 @@
 
 - [ChatImage](https://github.com/kitUIN/ChatImage)
 - [QueQiao](https://github.com/17TheWord/QueQiao)
-
-对着文件右键或者在编辑器内右键
