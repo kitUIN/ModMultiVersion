@@ -89,14 +89,15 @@
 
 ## 语法规范
 
-语法解析依赖于[ModMultiVersionInterpreter](https://github.com/kitUIN/ModMultiVersionInterpreter)
+语法解析依赖于[ModMultiVersionInterpreter(内置)](https://github.com/kitUIN/ModMultiVersionInterpreter)
 
+主要语法:
 - `(` `)`
 - `!` `&&` `||`
 - `!=` `>` `>=` `<` `<=` `==`
-- `&`识别为`&&`
-- `|`识别为`||`
-- `=`识别为`==`
+- `&`/`&&`
+- `|`/`||`
+- `=`/`==`
 - 支持变量自动替换
 - 左部省略自动补充`$$ ==`
 
@@ -327,6 +328,10 @@
     - 本插件0.16.6+
     - [ModMultiVersionTool](https://github.com/kitUIN/ModMultiVersionTool)1.2.7+
     - 如果使用`git`,需要上传`.idea/ModAliasState.xml`
+
+- 说明:
+    - 双向替换
+    - 建议只针对完整类名使用
  
 `视图`-`工具窗口`-`Alias Tool`
 
