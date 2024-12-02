@@ -24,6 +24,7 @@ class AddLoader : AnAction("Set A Folder As A Listening Loader") {
     override fun update(e: AnActionEvent) {
         if (e.project == null) return
         val psiElement = e.getData(CommonDataKeys.PSI_ELEMENT)
+        if (psiElement == null) return
         e.presentation.isEnabledAndVisible = psiElement is PsiDirectory
         val dir = psiElement as PsiDirectory
         if (e.project!!.getService(LoadersPluginState::class.java).loaders.contains(dir.virtualFile.name)) {
