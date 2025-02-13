@@ -8,7 +8,7 @@ import com.intellij.util.xmlb.annotations.Property
 @State(name = "AliasState", storages = [Storage("ModAliasState.xml")])
 class AliasState : PersistentStateComponent<AliasState> {
     @Property
-    var alias: MutableMap<String, MutableMap<String, String>> = mutableMapOf()
+    var alias: MutableMap<String, MutableMap<String, String>?> = mutableMapOf()
 
     @Nullable
     override fun getState(): AliasState {
