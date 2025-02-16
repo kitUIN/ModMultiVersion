@@ -5,10 +5,11 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.psi.PsiDirectory
+import io.github.kituin.modmultiversion.ModMultiVersionBundle
 import io.github.kituin.modmultiversion.storage.LoadersPluginState
 
 @Suppress("ActionPresentationInstantiatedInCtor")
-class AddLoader : AnAction("Set A Folder As A Listening Loader") {
+class AddLoader : AnAction(ModMultiVersionBundle.message("menu.listeningLoader")) {
     override fun actionPerformed(e: AnActionEvent) {
         if (e.project == null) return
         val psiElement = e.getData(CommonDataKeys.PSI_ELEMENT)
@@ -23,14 +24,13 @@ class AddLoader : AnAction("Set A Folder As A Listening Loader") {
 
     override fun update(e: AnActionEvent) {
         if (e.project == null) return
-        val psiElement = e.getData(CommonDataKeys.PSI_ELEMENT)
-        if (psiElement == null) return
+        val psiElement = e.getData(CommonDataKeys.PSI_ELEMENT) ?: return
         e.presentation.isEnabledAndVisible = psiElement is PsiDirectory
         val dir = psiElement as PsiDirectory
         if (e.project!!.getService(LoadersPluginState::class.java).loaders.contains(dir.virtualFile.name)) {
-            e.presentation.text = "取消文件夹${dir.virtualFile.name}为监听的加载器"
+            e.presentation.text = ModMultiVersionBundle.message("menu.listeningLoader.cancel").format(dir.virtualFile.name)
         } else {
-            e.presentation.text = "将文件夹${dir.virtualFile.name}设置为监听的加载器"
+            e.presentation.text = ModMultiVersionBundle.message("menu.listeningLoader.add").format(dir.virtualFile.name)
         }
     }
     override fun getActionUpdateThread(): ActionUpdateThread {

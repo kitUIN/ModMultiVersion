@@ -130,7 +130,7 @@ internal class AliasToolWindowFactory : ToolWindowFactory, DumbAware {
             if (dialog.showAndGet()) {
                 if (dialog.model.keyText.isBlank()) {
                     Messages.showMessageDialog(
-                        "key不能为空",
+                        "Key不能为空",
                         "Warn",
                         Messages.getWarningIcon()
                     )

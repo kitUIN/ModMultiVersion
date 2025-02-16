@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import io.github.kituin.modmultiversion.storage.AliasState
 import io.github.kituin.modmultiversion.storage.LoadersPluginState
+import io.github.kituin.modmultiversiontool.CommentMode
 import java.io.File
 import java.util.*
 import kotlin.io.path.*
@@ -25,6 +26,12 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
     private fun getAlias(): SortedMap<String, MutableMap<String, String>?> {
         return project!!.getService(AliasState::class.java).alias.toSortedMap(compareByDescending { it })
     }
+
+    private fun getCommentMode(): CommentMode {
+        val service = project!!.getService(LoadersPluginState::class.java)
+        return CommentMode(service.commentBeforeCode, service.commentWithOneSpace)
+    }
+
     private fun copyFile(
         sourceFile: File,
         moduleContentRoot: VirtualFile,
@@ -43,7 +50,7 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
                 if (loaderFile.isDirectory && loaderFile.name.startsWith(loaderF) && !ignore.contains(loaderFile.name)) {
                     fileHelper.copy(
                         sourceFile, Path("${loaderFile.path}/$targetFileName"),
-                        loaderFile.name, loaderF, getAlias(), true
+                        loaderFile.name, loaderF, getAlias(), true, getCommentMode()
                     )
                     logger.info("File Saved: ${loaderFile.path}/$targetFileName")
                     moduleContentRoot.findFile("${loaderFile.path}/$targetFileName")?.let {
@@ -85,10 +92,12 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
                 folder,
                 loader!!,
                 getAlias(),
-                false
+                false,
+                getCommentMode()
             )
             logger.info("File Reversed: ${forwardPath.invariantSeparatorsPathString}")
-            copyFile(forwardPath.toFile(), moduleContentRoot, subPath,
+            copyFile(
+                forwardPath.toFile(), moduleContentRoot, subPath,
                 loaders.firstOrNull {
                     forwardPath.invariantSeparatorsPathString.removePrefix("${fileHelper.projectPath}/").startsWith(it)
                 }, loaders, fileHelper, mutableListOf(folder)
