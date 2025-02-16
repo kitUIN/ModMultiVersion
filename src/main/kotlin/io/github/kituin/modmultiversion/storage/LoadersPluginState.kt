@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable
 @State(name = "LoadersPluginState", storages = [Storage("ModMultiLoaders.xml")])
 class LoadersPluginState : PersistentStateComponent<LoadersPluginState> {
     var loaders: MutableList<String> = mutableListOf("fabric","forge","neoforge","quilt")
-
+    var commentMode: Int = 0
     @Nullable
     override fun getState(): LoadersPluginState {
         return this
@@ -18,5 +18,6 @@ class LoadersPluginState : PersistentStateComponent<LoadersPluginState> {
 
     override fun loadState(state: LoadersPluginState) {
         loaders = state.loaders
+        commentMode = state.commentMode
     }
 }

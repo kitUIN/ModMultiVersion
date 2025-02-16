@@ -3,6 +3,7 @@
     <!-- Unique identifier of the plugin. It should be FQN. It cannot be changed between the plugin versions. -->
     <id>io.github.kituin.ModMultiVersion</id>
 
+    <resource-bundle>messages.ModMultiVersion</resource-bundle>
     <!-- Public plugin name should be written in Title Case.
          Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-name -->
     <name>ModMultiVersion</name>
@@ -25,6 +26,9 @@
     <!-- Extension points defined by the plugin.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
     <extensions defaultExtensionNs="com.intellij">
+        <projectConfigurable instance="io.github.kituin.modmultiversion.ModMultiVersionConfig" groupId="other"
+                             key="projectName" bundle="messages.ModMultiVersion"
+                             id="com.github.patou.gitmoji.config"/>
         <additionalTextAttributes scheme="Default" file="colorSchemes/highlightTokens.xml"/>
         <additionalTextAttributes scheme="Darcula" file="colorSchemes/highlightTokens.xml"/>
         <annotator language=""
