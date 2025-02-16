@@ -22,7 +22,7 @@ import kotlin.io.path.*
 class FileSaveListener(private val project: Project?) : BulkFileListener {
 
     private val logger = Logger.getInstance(FileSaveListener::class.java)
-    private fun getAlias(): SortedMap<String, MutableMap<String, String>> {
+    private fun getAlias(): SortedMap<String, MutableMap<String, String>?> {
         return project!!.getService(AliasState::class.java).alias.toSortedMap(compareByDescending { it })
     }
     private fun copyFile(
