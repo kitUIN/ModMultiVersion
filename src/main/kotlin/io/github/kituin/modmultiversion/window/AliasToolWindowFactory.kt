@@ -15,7 +15,6 @@ import io.github.kituin.modmultiversion.componet.KeyValueDialog
 import io.github.kituin.modmultiversion.storage.AliasState
 import java.awt.BorderLayout
 import javax.swing.JPanel
-import javax.swing.JScrollPane
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 
@@ -171,7 +170,7 @@ internal class AliasToolWindowFactory : ToolWindowFactory, DumbAware {
                 val value = dialog.model.valueText
                 if (key.isBlank()) {
                     Messages.showMessageDialog(
-                        "key不能为空",
+                        "Key不能为空",
                         "Warn",
                         Messages.getWarningIcon()
                     )

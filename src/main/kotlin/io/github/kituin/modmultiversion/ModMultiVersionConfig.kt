@@ -46,9 +46,9 @@ class ModMultiVersionConfig(private val project: Project) : SearchableConfigurab
         commentMode.addActionListener {
             run {
                 if (commentMode.getSelectedIndex() == 1) {
-                    commentWithOneSpace.setEnabled(true);
+                    commentWithOneSpace.setEnabled(true)
                 } else {
-                    commentWithOneSpace.setEnabled(false);
+                    commentWithOneSpace.setEnabled(false)
                 }
             }
         }
