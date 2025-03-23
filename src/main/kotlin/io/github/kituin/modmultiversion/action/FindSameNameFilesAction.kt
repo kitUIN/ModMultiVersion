@@ -35,13 +35,25 @@ class FindSameNameFilesAction : AnAction(ModMultiVersionBundle.message("menu.sam
         val subPath = Path(currentFile.path.removePrefix(project.basePath!!))
         if (subPath.count() < 3) return
 
-        val sameNameFiles = searchSameFiles(subPath, project)
-
+        val sameNameFiles = searchSameFiles(subPath, project).toSortedMap { k1, k2 ->
+            when {
+                k1 == "origin" -> -1
+                k2 == "origin" -> 1
+                else -> compareVersionKeys(k1, k2)
+            }
+        }
         // 创建菜单
         if (sameNameFiles.isNotEmpty()) {
             val actionGroup = DefaultActionGroup()
             sameNameFiles.forEach { file ->
                 if (file.value.children.isNotEmpty()) {
+                    file.value.children.sortWith { node1, node2 ->
+                        when {
+                            node1.name == "origin" -> -1
+                            node2.name == "origin" -> 1
+                            else -> compareVersionKeys(node1.name, node2.name)
+                        }
+                    }
                     val actionChildGroup = DefaultActionGroup(file.key, true)
                     file.value.children.forEach { child ->
                         child.file?.let {
@@ -147,4 +159,30 @@ class FindSameNameFilesAction : AnAction(ModMultiVersionBundle.message("menu.sam
     override fun getActionUpdateThread(): ActionUpdateThread {
         return ActionUpdateThread.EDT // 指定在 EDT 中更新
     }
+}
+
+fun compareVersionKeys(key1: String, key2: String): Int {
+    val prefix1 = key1.substringBefore("-")
+    val prefix2 = key2.substringBefore("-")
+    val version1 = key1.substringAfter("-")
+    val version2 = key2.substringAfter("-")
+    if (prefix1 == version1 || prefix2 == version2) {
+        return prefix1.compareTo(prefix2)
+    }
+    val prefixComparison = prefix1.compareTo(prefix2)
+    if (prefixComparison != 0) return prefixComparison
+
+    return compareVersions(version1, version2)
+}
+
+
+fun compareVersions(version1: String, version2: String): Int {
+    val parts1 = version1.split(".").map { it.toInt() }
+    val parts2 = version2.split(".").map { it.toInt() }
+    for (i in parts1.indices) {
+        if (i >= parts2.size) return 1
+        val diff = parts1[i] - parts2[i]
+        if (diff != 0) return diff
+    }
+    return if (parts1.size == parts2.size) 0 else -1
 }
