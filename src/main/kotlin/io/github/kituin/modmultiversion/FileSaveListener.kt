@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import io.github.kituin.modmultiversion.storage.AliasState
 import io.github.kituin.modmultiversion.storage.LoadersPluginState
+import io.github.kituin.modmultiversion.tool.VFileCopyWorker
 import io.github.kituin.modmultiversiontool.CommentMode
 import java.io.File
 import java.util.*
@@ -53,10 +54,10 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
                         loaderFile.name, loaderF, getAlias(), true, getCommentMode()
                     )
                     logger.info("File Saved: ${loaderFile.path}/$targetFileName")
-                    moduleContentRoot.findFile("${loaderFile.path}/$targetFileName")?.let {
-                        manager.reloadFromDisk(manager.getDocument(it)!!)
-                        logger.info("File reloadFromDisk: ${loaderFile.path}/$targetFileName")
-                    }
+//                    moduleContentRoot.findFile("${loaderFile.path}/$targetFileName")?.let {
+//                        manager.reloadFromDisk(manager.getDocument(it)!!)
+//                        logger.info("File reloadFromDisk: ${loaderFile.path}/$targetFileName")
+//                    }
                 }
             }
 
@@ -122,10 +123,10 @@ class FileSaveListener(private val project: Project?) : BulkFileListener {
             if (event is VFileContentChangeEvent) {
                 val file = event.file
                 val projectPath = project.basePath ?: return
-                val fileHelper = FileHelper(projectPath)
                 if (!file.isDirectory && file.path.startsWith(projectPath)) {
                     val moduleContentRoot =
                         ProjectRootManager.getInstance(project).fileIndex.getContentRootForFile(file) ?: return
+                    val fileHelper = FileHelper(projectPath, VFileCopyWorker(moduleContentRoot))
                     val relativePath = file.path.removePrefix("$projectPath/")
                     val sourceFile = File(file.path)
                     processFile(relativePath, sourceFile, loaders, moduleContentRoot, fileHelper)
