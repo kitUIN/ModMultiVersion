@@ -24,7 +24,13 @@
 - [简易教程](https://blog.kituin.fun/text/minecraft/multi/02/)
 - QQ群帮助 220942914
 
-使用该插件开发的模组/插件
+## 使用该插件开发的模组/插件
 
 - [ChatImage](https://github.com/kitUIN/ChatImage)
 - [QueQiao](https://github.com/17TheWord/QueQiao)
+
+
+## 相关项目
+
+- [ModMultiVersionTool](https://github.com/kitUIN/ModMultiVersionTool) ModMultiVersion-构建工具
+- [ModMultiVersionInterpreter](https://github.com/kitUIN/ModMultiVersionInterpreter) ModMultiVersion自定义词法分析器,语法分析器,解释执行器
