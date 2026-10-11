@@ -41,7 +41,8 @@ tasks {
     }
     patchPluginXml {
         sinceBuild.set("232")
-        untilBuild.set("262.*")
+        // Leave the upper build bound empty to allow installation on future IDE versions.
+        untilBuild.set("")
     }
 
     signPlugin {
